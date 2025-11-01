@@ -1,8 +1,15 @@
 # 🧩 AI Creative Workflow
 
-一个基于 CrewAI 的多 Agent 工作流编排平台，支持多 LLM 提供商和一键部署到 Vercel。
+一个基于 CrewAI 的多 Agent 工作流编排平台，支持多 LLM 提供商。
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjoeseesun%2Fqiaoagent&env=OPENAI_API_KEY,ADMIN_PASSWORD&envDescription=API%20Keys%20and%20Admin%20Password&envLink=https%3A%2F%2Fgithub.com%2Fjoeseesun%2Fqiaoagent%2Fblob%2Fmain%2F.env.example&project-name=ai-creative-workflow&repository-name=ai-creative-workflow)
+> ⚠️ **部署说明**
+> 本项目使用 **Next.js + Python (CrewAI)** 混合架构，需要同时运行 Node.js 和 Python 环境。
+> **不支持 Vercel 一键部署**（Vercel 不支持 Python 子进程）。
+> 推荐部署到：**Docker**（最简单） / **Railway** / **Render**。详见[部署指南](#-部署)。
+>
+> 🐳 **有服务器？**
+> - 宝塔面板用户：[5 分钟快速部署](./BAOTA_QUICKSTART.md) | [宝塔完整指南](./docs/BAOTA_DEPLOYMENT.md)
+> - 其他服务器：[Docker 部署指南](./docs/DOCKER_DEPLOYMENT.md)
 
 > **🔒 安全提示：** 本项目使用环境变量管理所有敏感信息（API Keys、密码等），代码中不包含任何硬编码的密钥。
 >
@@ -17,7 +24,7 @@
 - 🔒 **安全优先** - 环境变量管理 API Keys，代码中无硬编码密钥
 - 🎨 **极简设计** - 黑白灰配色，基于 shadcn/ui 的现代化界面
 - 📱 **响应式布局** - 完美支持移动端和桌面端
-- 🚀 **一键部署** - 支持 Vercel 无服务器部署
+- 🚀 **灵活部署** - 支持 Railway、Render、Docker 等多种部署方式
 
 ## 🏗️ 技术栈
 
@@ -34,27 +41,46 @@
 - **LangChain** - LLM 集成
 - **多 LLM 支持** - Tu-Zi (Claude)、Kimi、DeepSeek、智谱 AI、Gemini 等
 
-## 🚀 快速部署
+## 🚀 部署
 
-### 方法一：一键部署到 Vercel（推荐）
+### 方法一：Docker 部署（推荐，适合有服务器）
 
-点击下方按钮，一键部署到 Vercel：
+#### 🎯 宝塔面板用户（最简单）
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjoeseesun%2Fqiaoagent&env=OPENAI_API_KEY,ADMIN_PASSWORD&envDescription=API%20Keys%20and%20Admin%20Password&envLink=https%3A%2F%2Fgithub.com%2Fjoeseesun%2Fqiaoagent%2Fblob%2Fmain%2F.env.example&project-name=ai-creative-workflow&repository-name=ai-creative-workflow)
+**只需 6 步，5 分钟完成：**
 
-**部署时需要配置的环境变量：**
+1. 宝塔 **软件商店** → 安装 **Docker 管理器**
+2. 宝塔 **终端** → 克隆项目到 `/www/wwwroot/qiaoagent`
+3. 宝塔 **文件** → 配置 `.env.production`（填入密码和 API Key）
+4. 宝塔 **终端** → 运行 `./docker-deploy.sh`
+5. 宝塔 **安全** → 开放端口 `3000`
+6. 访问 `http://你的IP:3000` ✅
 
-| 环境变量 | 说明 | 示例 |
-|---------|------|------|
-| `OPENAI_API_KEY` | Tu-Zi API Key（或其他 LLM 的 API Key） | `sk-xxx...` |
-| `ADMIN_PASSWORD` | 管理后台密码 | `your-secure-password` |
-| `TUZI_API_KEY` | （可选）Tu-Zi 专用 API Key | `sk-xxx...` |
-| `KIMI_API_KEY` | （可选）Kimi API Key | `sk-xxx...` |
-| `DEEPSEEK_API_KEY` | （可选）DeepSeek API Key | `sk-xxx...` |
-| `ZHIPU_API_KEY` | （可选）智谱 AI API Key | `xxx...` |
-| `GEMINI_API_KEY` | （可选）Google Gemini API Key | `AIza...` |
+📖 **详细文档：** [宝塔 5 分钟快速部署](./BAOTA_QUICKSTART.md) | [宝塔完整指南](./docs/BAOTA_DEPLOYMENT.md)
 
-> 💡 **提示：** 至少需要配置一个 LLM 提供商的 API Key。推荐使用 `OPENAI_API_KEY` 作为默认配置。
+#### 🐳 其他服务器
+
+**一键部署脚本：**
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/joeseesun/qiaoagent.git
+cd qiaoagent
+
+# 2. 配置环境变量
+cp .env.production.example .env.production
+vim .env.production  # 填入 ADMIN_PASSWORD 和 OPENAI_API_KEY
+
+# 3. 一键部署
+chmod +x docker-deploy.sh
+./docker-deploy.sh
+```
+
+**访问应用：** `http://your-server-ip:3000`
+
+📖 **详细文档：** [Docker 部署完整指南](./docs/DOCKER_DEPLOYMENT.md)
+
+---
 
 ### 方法二：本地开发
 
@@ -86,6 +112,57 @@ npm run dev
 ```
 
 访问 `http://localhost:3000` 查看应用。
+
+### 方法二：Docker 部署
+
+**1. 构建镜像**
+
+```bash
+docker build -t qiaoagent .
+```
+
+**2. 运行容器**
+
+```bash
+docker run -p 3000:3000 \
+  -e OPENAI_API_KEY=your-api-key \
+  -e ADMIN_PASSWORD=your-password \
+  qiaoagent
+```
+
+### 方法三：Railway 部署（推荐生产环境）
+
+1. Fork 本仓库到你的 GitHub 账号
+2. 访问 [Railway](https://railway.app/)
+3. 点击 "New Project" → "Deploy from GitHub repo"
+4. 选择你 fork 的仓库
+5. 配置环境变量（见下方）
+6. Railway 会自动检测并部署 Next.js + Python 应用
+
+**需要配置的环境变量：**
+
+| 环境变量 | 说明 | 必需 |
+|---------|------|------|
+| `OPENAI_API_KEY` | 默认 LLM API Key | ✅ |
+| `ADMIN_PASSWORD` | 管理后台密码 | ✅ |
+| `TUZI_API_KEY` | Tu-Zi API Key | ❌ |
+| `KIMI_API_KEY` | Kimi API Key | ❌ |
+| `DEEPSEEK_API_KEY` | DeepSeek API Key | ❌ |
+| `ZHIPU_API_KEY` | 智谱 AI API Key | ❌ |
+| `GEMINI_API_KEY` | Google Gemini API Key | ❌ |
+
+> 💡 **提示：** 至少需要配置一个 LLM 提供商的 API Key。
+
+### 方法四：Render 部署
+
+1. Fork 本仓库
+2. 访问 [Render](https://render.com/)
+3. 创建新的 "Web Service"
+4. 连接你的 GitHub 仓库
+5. 配置：
+   - **Build Command:** `npm install && pip install -r requirements.txt && npm run build`
+   - **Start Command:** `npm start`
+6. 添加环境变量（同上）
 
 ## 🎯 使用指南
 
