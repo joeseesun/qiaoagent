@@ -62,7 +62,7 @@ docker-compose logs -f
 
 **4. 访问应用**
 
-打开浏览器访问：`http://your-server-ip:3000`
+打开浏览器访问：`http://your-server-ip:3355`
 
 ### 方法二：使用 Docker 命令
 
@@ -78,7 +78,7 @@ docker build -t qiaoagent:latest .
 docker run -d \
   --name qiaoagent \
   --restart unless-stopped \
-  -p 3000:3000 \
+  -p 3355:3355 \
   -e OPENAI_API_KEY=sk-your-api-key \
   -e ADMIN_PASSWORD=your-password \
   -e TUZI_API_KEY=sk-your-tuzi-key \
@@ -200,7 +200,7 @@ server {
     server_name your-domain.com;  # 替换为你的域名
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3355;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -239,7 +239,7 @@ sudo certbot --nginx -d your-domain.com
 2. **限制端口访问**
    ```bash
    # 使用防火墙只允许特定 IP 访问
-   sudo ufw allow from your-ip to any port 3000
+   sudo ufw allow from your-ip to any port 3355
    ```
 
 3. **定期更新**
@@ -289,7 +289,7 @@ services:
 docker-compose logs
 
 # 检查端口是否被占用
-sudo lsof -i :3000
+sudo lsof -i :3355
 ```
 
 ### 2. 内存不足

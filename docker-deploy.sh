@@ -78,7 +78,7 @@ rebuild=${rebuild:-y}
 
 if [ "$rebuild" = "y" ] || [ "$rebuild" = "Y" ]; then
     echo "🔨 正在构建 Docker 镜像（这可能需要几分钟）..."
-    docker-compose build --no-cache
+    docker-compose --env-file .env.production build --no-cache
     echo "✅ 镜像构建完成"
 else
     echo "⏭️  跳过构建，使用现有镜像"
@@ -89,7 +89,7 @@ echo ""
 # 停止旧容器
 if [ "$(docker ps -q -f name=qiaoagent)" ]; then
     echo "🛑 停止旧容器..."
-    docker-compose down
+    docker-compose --env-file .env.production down
     echo "✅ 旧容器已停止"
 fi
 
@@ -111,11 +111,11 @@ if [ "$(docker ps -q -f name=qiaoagent -f status=running)" ]; then
     echo "========================================="
     echo ""
     echo "📍 访问地址："
-    echo "   http://localhost:3000"
-    echo "   http://$(hostname -I | awk '{print $1}'):3000"
+    echo "   http://localhost:3355"
+    echo "   http://$(hostname -I | awk '{print $1}'):3355"
     echo ""
     echo "🔐 管理后台："
-    echo "   http://localhost:3000/admin"
+    echo "   http://localhost:3355/admin"
     echo ""
     echo "📊 查看日志："
     echo "   docker-compose logs -f"

@@ -8,7 +8,7 @@ services:
     container_name: qiaoagent
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3355:3355"
     environment:
       # 必需的环境变量
       - NODE_ENV=production
@@ -26,7 +26,7 @@ services:
       - ./config:/app/config
       - ./workflows:/app/workflows
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3355"]
       interval: 30s
       timeout: 10s
       retries: 3

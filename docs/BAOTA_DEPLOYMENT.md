@@ -107,15 +107,15 @@ docker-compose --env-file .env.production up -d --build
 
 1. 点击宝塔面板左侧 **「安全」**
 2. 点击 **「添加端口规则」**
-3. 输入端口：`3000`
+3. 输入端口：`3355`
 4. 备注：`QiaoAgent`
 5. 点击 **「确定」**
 
 ### 步骤 8：访问应用
 
 打开浏览器访问：
-- **主页：** `http://你的服务器IP:3000`
-- **管理后台：** `http://你的服务器IP:3000/admin`
+- **主页：** `http://你的服务器IP:3355`
+- **管理后台：** `http://你的服务器IP:3355/admin`
 
 ## 🌐 方法二：配置域名访问（推荐）
 
@@ -137,7 +137,7 @@ docker-compose --env-file .env.production up -d --build
 4. 点击 **「添加反向代理」**
 5. 填写信息：
    - **代理名称：** `QiaoAgent`
-   - **目标 URL：** `http://127.0.0.1:3000`
+   - **目标 URL：** `http://127.0.0.1:3355`
    - **发送域名：** `$host`
 6. 点击 **「提交」**
 
@@ -245,7 +245,7 @@ curl -L "https://github.com/docker/compose/releases/latest/download/docker-compo
 chmod +x /usr/local/bin/docker-compose
 ```
 
-### 2. 端口 3000 被占用
+### 2. 端口 3355 被占用
 
 **解决方法：**
 
@@ -253,10 +253,10 @@ chmod +x /usr/local/bin/docker-compose
 
 ```yaml
 ports:
-  - "3001:3000"  # 改为 3001 或其他未使用的端口
+  - "3356:3355"  # 改为 3356 或其他未使用的端口
 ```
 
-然后访问 `http://你的IP:3001`
+然后访问 `http://你的IP:3356`
 
 ### 3. 容器启动失败
 
@@ -284,7 +284,7 @@ services:
 
 **解决方法：**
 
-1. 检查宝塔安全规则是否开放 3000 端口
+1. 检查宝塔安全规则是否开放 3355 端口
 2. 检查服务器商（阿里云/腾讯云等）的安全组规则
 3. 检查容器是否正常运行：`docker ps`
 
@@ -341,7 +341,7 @@ services:
 2. ✅ 克隆项目到 `/www/wwwroot/qiaoagent`
 3. ✅ 配置 `.env.production`
 4. ✅ 运行 `./docker-deploy.sh`
-5. ✅ 开放 3000 端口
+5. ✅ 开放 3355 端口
 6. ✅ 配置域名和 SSL（可选）
 
 **整个过程不超过 10 分钟！** 🚀

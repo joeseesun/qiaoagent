@@ -59,8 +59,8 @@ chmod +x docker-deploy.sh
 
 ## 🌐 访问应用
 
-- **主页：** `http://your-server-ip:3000`
-- **管理后台：** `http://your-server-ip:3000/admin`
+- **主页：** `http://your-server-ip:3355`
+- **管理后台：** `http://your-server-ip:3355/admin`
 
 ## 📊 常用命令
 
@@ -100,7 +100,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3355;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
