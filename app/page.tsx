@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { InputPanel } from '@/components/input-panel'
 import { TimelineAgent } from '@/components/timeline-agent'
 import { ResultPanel } from '@/components/result-panel'
+import { SupportDialog } from '@/components/support-dialog'
 
 interface Workflow {
   id: string
@@ -31,6 +32,8 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false)
   const [result, setResult] = useState<Result | null>(null)
   const [agentProcesses, setAgentProcesses] = useState<AgentProcess[]>([])
+  const [showSupportDialog, setShowSupportDialog] = useState<boolean>(false)
+  const [supportTab, setSupportTab] = useState<'reward' | 'follow'>('reward')
 
   // Load workflows on mount
   useEffect(() => {
@@ -166,6 +169,11 @@ export default function Home() {
     URL.revokeObjectURL(url)
   }
 
+  const handleOpenSupport = (tab: 'reward' | 'follow') => {
+    setSupportTab(tab)
+    setShowSupportDialog(true)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Input Panel - Fixed Left */}
@@ -177,6 +185,7 @@ export default function Home() {
         onWorkflowChange={setSelectedWorkflow}
         onTopicChange={setTopic}
         onGenerate={handleGenerate}
+        onOpenSupport={handleOpenSupport}
       />
 
       {/* Main Content - Timeline */}
@@ -268,6 +277,13 @@ export default function Home() {
         result={result}
         onCopy={copyToClipboard}
         onDownload={downloadMarkdown}
+      />
+
+      {/* Support Dialog */}
+      <SupportDialog
+        isOpen={showSupportDialog}
+        onClose={() => setShowSupportDialog(false)}
+        initialTab={supportTab}
       />
     </div>
   )

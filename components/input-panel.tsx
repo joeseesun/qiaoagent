@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Settings, Loader2 } from 'lucide-react'
+import { Settings, Loader2, Heart, QrCode } from 'lucide-react'
 import Link from 'next/link'
 
 interface Workflow {
@@ -21,6 +21,7 @@ interface InputPanelProps {
   onWorkflowChange: (value: string) => void
   onTopicChange: (value: string) => void
   onGenerate: () => void
+  onOpenSupport?: (tab: 'reward' | 'follow') => void
 }
 
 export function InputPanel({
@@ -30,7 +31,8 @@ export function InputPanel({
   loading,
   onWorkflowChange,
   onTopicChange,
-  onGenerate
+  onGenerate,
+  onOpenSupport
 }: InputPanelProps) {
   return (
     <div className="fixed left-0 top-0 h-screen w-[420px] border-r border-border bg-background overflow-y-auto">
@@ -125,6 +127,34 @@ export function InputPanel({
               </>
             )}
           </Button>
+        </motion.div>
+
+        {/* Support Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="flex gap-3"
+        >
+          <button
+            onClick={() => onOpenSupport?.('reward')}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-border hover:border-purple-500/50 hover:bg-purple-500/5 transition-all group"
+          >
+            <Heart className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+              打赏支持
+            </span>
+          </button>
+
+          <button
+            onClick={() => onOpenSupport?.('follow')}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-border hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
+          >
+            <QrCode className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+              关注公众号
+            </span>
+          </button>
         </motion.div>
       </div>
     </div>
