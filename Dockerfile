@@ -27,7 +27,7 @@ RUN npm config set fetch-timeout 300000 && \
 
 # Install Python dependencies
 COPY requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Rebuild the source code only when needed
 FROM base AS builder
