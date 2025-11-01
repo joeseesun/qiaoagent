@@ -1,0 +1,89 @@
+name: Security Check
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for all branches and tags
+    
+    - name: Check for hardcoded API keys
+      run: |
+        echo "🔍 Checking for hardcoded API keys..."
+        
+        # Check for common API key patterns
+        if grep -r "sk-[A-Za-z0-9]\{40,\}" config/ 2>/dev/null; then
+          echo "❌ ERROR: Found potential API keys in config/"
+          exit 1
+        fi
+        
+        if grep -r "sk-[A-Za-z0-9]\{40,\}" .env.example 2>/dev/null; then
+          echo "❌ ERROR: Found potential API keys in .env.example"
+          exit 1
+        fi
+        
+        # Check for other sensitive patterns
+        if grep -r "password.*=.*[^your-]" config/ 2>/dev/null | grep -v "ADMIN_PASSWORD"; then
+          echo "⚠️  WARNING: Found potential hardcoded passwords"
+        fi
+        
+        echo "✅ No hardcoded API keys found"
+    
+    - name: Check .env is in .gitignore
+      run: |
+        echo "🔍 Checking .gitignore..."
+        
+        if ! grep -q "^\.env$" .gitignore; then
+          echo "❌ ERROR: .env is not in .gitignore"
+          exit 1
+        fi
+        
+        echo "✅ .env is properly ignored"
+    
+    - name: Check for .env file in repository
+      run: |
+        echo "🔍 Checking for .env file..."
+        
+        if [ -f .env ]; then
+          echo "❌ ERROR: .env file found in repository!"
+          echo "This file should never be committed."
+          exit 1
+        fi
+        
+        echo "✅ No .env file in repository"
+    
+    - name: Verify environment variable placeholders
+      run: |
+        echo "🔍 Verifying placeholders in .env.example..."
+        
+        if grep -q "sk-[A-Za-z0-9]\{40,\}" .env.example; then
+          echo "❌ ERROR: .env.example contains real API keys"
+          exit 1
+        fi
+        
+        if ! grep -q "your-api-key-here\|your-.*-api-key" .env.example; then
+          echo "⚠️  WARNING: .env.example might not have proper placeholders"
+        fi
+        
+        echo "✅ Placeholders look good"
+    
+    - name: Security summary
+      if: success()
+      run: |
+        echo "✅ All security checks passed!"
+        echo ""
+        echo "Verified:"
+        echo "  - No hardcoded API keys in config files"
+        echo "  - .env is in .gitignore"
+        echo "  - No .env file in repository"
+        echo "  - Proper placeholders in .env.example"
+

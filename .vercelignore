@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+__pycache__
+*.pyc
+.Python
+env
+venv
+
+# Development
+.env.local
+.env.development.local
+.env.test.local
+
+# Testing
+coverage
+.pytest_cache
+
+# Misc
+.DS_Store
+*.log
+.vscode
+.idea
+

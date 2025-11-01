@@ -1,0 +1,70 @@
+[
+  {
+    "workflowId": "tech_writer",
+    "defaultProviderId": "tuzi",
+    "defaultModel": "claude-sonnet-4-5-20250929",
+    "agentConfigs": [
+      {
+        "agentName": "Researcher",
+        "providerId": "kimi",
+        "model": "kimi-k2-turbo-preview"
+      },
+      {
+        "agentName": "Writer",
+        "providerId": "kimi",
+        "model": "kimi-k2-turbo-preview"
+      },
+      {
+        "agentName": "Editor",
+        "providerId": "kimi",
+        "model": "kimi-k2-turbo-preview"
+      }
+    ]
+  },
+  {
+    "workflowId": "wechat_title_creator",
+    "defaultProviderId": "tuzi",
+    "defaultModel": "claude-sonnet-4-5-20250929",
+    "agentConfigs": [
+      {
+        "agentName": "ContentAnalyzer",
+        "providerId": "provider_1762002098632",
+        "model": "deepseek-chat"
+      },
+      {
+        "agentName": "TitleOptimizer",
+        "providerId": "tuzi",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+      {
+        "agentName": "TitleCreator",
+        "providerId": "kimi",
+        "model": "kimi-k2-turbo-preview"
+      }
+    ]
+  },
+  [
+    {
+      "workflowId": "wechat_title_creator",
+      "defaultProviderId": "tuzi",
+      "defaultModel": "claude-sonnet-4-5-20250929",
+      "agentConfigs": [
+        {
+          "agentName": "ContentAnalyzer",
+          "providerId": "provider_1762011180409",
+          "model": "gemini-2.5-pro"
+        },
+        {
+          "agentName": "TitleCreator",
+          "providerId": "kimi",
+          "model": "kimi-k2-0905-preview"
+        },
+        {
+          "agentName": "TitleOptimizer",
+          "providerId": "kimi",
+          "model": "kimi-k2-0905-preview"
+        }
+      ]
+    }
+  ]
+]

@@ -1,0 +1,97 @@
+[
+  {
+    "id": "tuzi",
+    "name": "Tu-Zi (Claude Sonnet 4.5)",
+    "type": "custom",
+    "baseURL": "https://api.tu-zi.com/v1",
+    "apiKey": "your-tuzi-api-key-here",
+    "models": [
+      "claude-sonnet-4-5-20250929"
+    ],
+    "defaultModel": "claude-sonnet-4-5-20250929",
+    "enabled": true,
+    "description": "Tu-Zi API (Claude Sonnet 4.5)",
+    "createdAt": 1704067200000,
+    "updatedAt": 1762002030764
+  },
+  {
+    "id": "kimi",
+    "name": "Kimi (Moonshot AI)",
+    "type": "kimi",
+    "baseURL": "https://api.moonshot.cn/v1",
+    "apiKey": "your-kimi-api-key-here",
+    "models": [
+      "kimi-k2-0905-preview",
+      "kimi-k2-0711-preview",
+      "kimi-latest",
+      "kimi-thinking-preview",
+      "moonshot-v1-8k",
+      "moonshot-v1-32k",
+      "moonshot-v1-128k"
+    ],
+    "defaultModel": "kimi-k2-0905-preview",
+    "enabled": true,
+    "description": "Kimi (Moonshot AI) - K2 万亿参数 MoE 模型，支持长上下文",
+    "createdAt": 1704067200000,
+    "updatedAt": 1762011089364
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "type": "deepseek",
+    "baseURL": "https://api.deepseek.com/v1",
+    "apiKey": "your-deepseek-api-key-here",
+    "models": [
+      "deepseek-chat",
+      "deepseek-coder"
+    ],
+    "defaultModel": "deepseek-chat",
+    "enabled": true,
+    "description": "DeepSeek - 深度求索大模型",
+    "createdAt": 1762002098632,
+    "updatedAt": 1762011045762
+  },
+  {
+    "id": "zhipu",
+    "name": "智谱 AI (GLM)",
+    "type": "zhipu",
+    "baseURL": "https://open.bigmodel.cn/api/paas/v4",
+    "apiKey": "your-zhipu-api-key-here",
+    "models": [
+      "glm-4.6",
+      "glm-4.5-flash",
+      "glm-4.5-air",
+      "glm-4.5v",
+      "glm-4v-flash",
+      "cogview-4",
+      "cogview-3-flash",
+      "cogvideox-3",
+      "cogvideox-flash"
+    ],
+    "defaultModel": "glm-4.6",
+    "enabled": true,
+    "description": "智谱 AI - GLM-4.6 旗舰模型 / GLM-4.5 系列（Flash 免费 / Air 高性价比）",
+    "createdAt": 1704067200000,
+    "updatedAt": 1762011029940
+  },
+  {
+    "id": "gemini",
+    "name": "Google Gemini",
+    "type": "gemini",
+    "baseURL": "https://generativelanguage.googleapis.com/v1beta",
+    "apiKey": "your-gemini-api-key-here",
+    "models": [
+      "gemini-2.5-pro",
+      "gemini-2.0-flash-exp",
+      "gemini-1.5-pro",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.0-pro"
+    ],
+    "defaultModel": "gemini-2.5-pro",
+    "enabled": true,
+    "description": "Google Gemini - 多模态模型，支持长上下文",
+    "createdAt": 1762011180410,
+    "updatedAt": 1762011257671
+  }
+]
