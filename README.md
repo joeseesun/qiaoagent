@@ -138,9 +138,30 @@ npm run dev
 
 欢迎提交 Issue 和 Pull Request！请查看 [贡献指南](./docs/CONTRIBUTING.md)
 
+## ☕ 支持项目
+
+如果这个项目对你有帮助，欢迎通过以下方式支持：
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="./public/qr-codes/wechat-reward.jpg" width="200px" alt="微信打赏"/>
+        <br/>
+        <b>微信打赏</b>
+      </td>
+      <td align="center">
+        <img src="./public/qr-codes/wechat-follow.jpg" width="200px" alt="关注公众号"/>
+        <br/>
+        <b>关注公众号</b>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ## 📄 许可证
 
-MIT License
+[MIT License](./LICENSE)
 
 ## 🙏 致谢
 
