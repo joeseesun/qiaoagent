@@ -18,7 +18,9 @@ WORKDIR /app
 
 # Install Node.js dependencies
 COPY package.json package-lock.json* ./
-RUN npm ci
+# Use Taobao npm mirror for better connectivity
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm ci
 
 # Install Python dependencies
 COPY requirements.txt ./
