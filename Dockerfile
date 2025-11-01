@@ -18,8 +18,9 @@ WORKDIR /app
 
 # Install Node.js dependencies
 COPY package.json package-lock.json* ./
-# Use Taobao npm mirror for better connectivity
-RUN npm config set registry https://registry.npmmirror.com && \
+# Increase timeout and retry for better network stability
+RUN npm config set fetch-timeout 60000 && \
+    npm config set fetch-retries 5 && \
     npm ci
 
 # Install Python dependencies
