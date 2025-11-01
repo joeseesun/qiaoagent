@@ -90,7 +90,7 @@
     "id": "kimi",
     "name": "Kimi (Moonshot AI)",
     "baseURL": "https://api.moonshot.cn/v1",
-    "apiKey": "sk-fYmID3PPGRKWAavrsVRJR0yAnF6210ya4rAoc5TZZKFRDAH5",
+    "apiKey": "your-api-key-here",
     "models": [
       "moonshot-v1-8k",
       "moonshot-v1-32k",
