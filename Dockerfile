@@ -18,10 +18,12 @@ WORKDIR /app
 
 # Install Node.js dependencies
 COPY package.json package-lock.json* ./
-# Increase timeout and retry for better network stability
-RUN npm config set fetch-timeout 60000 && \
-    npm config set fetch-retries 5 && \
-    npm ci
+# Use npm install with network optimizations for better stability
+RUN npm config set fetch-timeout 300000 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 10 && \
+    npm install --legacy-peer-deps --no-audit --no-fund
 
 # Install Python dependencies
 COPY requirements.txt ./
