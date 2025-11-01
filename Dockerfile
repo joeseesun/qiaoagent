@@ -1,16 +1,16 @@
 # Multi-stage build for Next.js + Python
 
-FROM node:18-alpine AS base
+FROM node:18-slim AS base
 
 # Install Python and build dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3 \
-    py3-pip \
+    python3-pip \
     python3-dev \
-    build-base \
-    gcc \
-    musl-dev \
-    libffi-dev
+    build-essential \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -27,7 +27,7 @@ RUN npm config set fetch-timeout 300000 && \
 
 # Install Python dependencies
 COPY requirements.txt ./
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -48,8 +48,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 -g nodejs nextjs
 
 # Copy Python site-packages
 COPY --from=deps /usr/lib/python3.11/site-packages /usr/lib/python3.11/site-packages
