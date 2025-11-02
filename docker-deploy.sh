@@ -77,8 +77,8 @@ read -p "是否重新构建镜像？(y/n，默认 y): " rebuild
 rebuild=${rebuild:-y}
 
 if [ "$rebuild" = "y" ] || [ "$rebuild" = "Y" ]; then
-    echo "🔨 正在构建 Docker 镜像（这可能需要几分钟）..."
-    docker-compose --env-file .env.production build --no-cache
+    echo "🔨 正在构建 Docker 镜像（利用缓存加速）..."
+    docker-compose --env-file .env.production build
     echo "✅ 镜像构建完成"
 else
     echo "⏭️  跳过构建，使用现有镜像"
