@@ -52,7 +52,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs nextjs
+RUN useradd --system --uid 1001 -g nodejs nextjs --create-home
 
 # Copy Python dependencies from deps stage
 # Copy the entire Python lib directory to ensure all packages are included
@@ -73,6 +73,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 
 # Ensure Python packages are readable by nextjs user
 RUN chmod -R 755 /usr/local/lib/python3.11
+
+# Create and set permissions for CrewAI data directory
+RUN mkdir -p /home/nextjs/.local/share && \
+    chown -R nextjs:nodejs /home/nextjs
 
 USER nextjs
 
