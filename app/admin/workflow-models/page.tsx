@@ -251,16 +251,10 @@ export default function WorkflowModelsPage() {
                               onValueChange={(value) => {
                                 if (value === '__default__') {
                                   // Remove agent config to use default
-                                  const newConfigs = configs.map(c => {
-                                    if (c.workflowId === workflow.id) {
-                                      return {
-                                        ...c,
-                                        agentConfigs: c.agentConfigs.filter(ac => ac.agentName !== agent.name)
-                                      }
-                                    }
-                                    return c
+                                  const currentConfig = getConfig(workflow.id)
+                                  updateConfig(workflow.id, {
+                                    agentConfigs: currentConfig.agentConfigs.filter(ac => ac.agentName !== agent.name)
                                   })
-                                  setConfigs(newConfigs)
                                 } else {
                                   const provider = providers.find(p => p.id === value)
                                   updateAgentConfig(
