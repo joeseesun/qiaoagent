@@ -24,7 +24,6 @@ services:
     volumes:
       # 持久化配置文件（可选）
       - ./config:/app/config
-      - ./workflows:/app/workflows
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3355"]
       interval: 30s

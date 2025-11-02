@@ -68,7 +68,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/crew ./crew
 COPY --from=builder --chown=nextjs:nodejs /app/api ./api
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
-COPY --from=builder --chown=nextjs:nodejs /app/workflows ./workflows
 
 USER nextjs
 
