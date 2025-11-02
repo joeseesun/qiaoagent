@@ -7,7 +7,7 @@ import sys
 import io
 import re
 from contextlib import redirect_stdout, redirect_stderr
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent, Task, Crew, Process, LLM
 from langchain_openai import ChatOpenAI
 from langchain_core.callbacks.base import BaseCallbackHandler
 from dotenv import load_dotenv
@@ -125,21 +125,21 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
             if not model:
                 model = provider.get('defaultModel')
 
-            # Create LLM config dict for CrewAI
-            llm_config = {
-                "model": model,
-                "base_url": provider['baseURL'],
-                "api_key": provider['apiKey'],
-                "temperature": 0.7,
-            }
+            # Create CrewAI LLM instance
+            agent_llm = LLM(
+                model=f"openai/{model}",
+                base_url=provider['baseURL'],
+                api_key=provider['apiKey'],
+                temperature=0.7,
+            )
         else:
             # Fallback to environment variables
-            llm_config = {
-                "model": os.getenv("OPENAI_MODEL_NAME", "claude-sonnet-4-5-20250929"),
-                "base_url": os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
-                "api_key": os.getenv("OPENAI_API_KEY"),
-                "temperature": 0.7,
-            }
+            agent_llm = LLM(
+                model=f"openai/{os.getenv('OPENAI_MODEL_NAME', 'claude-sonnet-4-5-20250929')}",
+                base_url=os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
+                api_key=os.getenv("OPENAI_API_KEY"),
+                temperature=0.7,
+            )
 
         agent = Agent(
             role=agent_config["role"],
@@ -147,7 +147,7 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
             backstory=agent_config.get("prompt", ""),
             verbose=True,
             allow_delegation=False,
-            llm=llm_config
+            llm=agent_llm
         )
         agents[agent_name] = agent
 
