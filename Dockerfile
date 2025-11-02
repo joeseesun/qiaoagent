@@ -3,6 +3,7 @@
 FROM node:18-slim AS base
 
 # Install Python and build dependencies
+# Include SQLite3 for ChromaDB and other system libraries
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -10,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
     curl \
+    sqlite3 \
+    libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/* \
     && ln -s /usr/bin/python3 /usr/bin/python
 
@@ -50,6 +53,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Set environment variables for Python and ChromaDB
+ENV PYTHONUNBUFFERED=1
+ENV ALLOW_RESET=TRUE
+ENV IS_PERSISTENT=TRUE
 
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs nextjs --create-home
