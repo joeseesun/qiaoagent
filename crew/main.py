@@ -281,6 +281,8 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
         def step_callback(step_output):
             """Callback executed after each step - receives AgentFinish object"""
             try:
+                send_progress('task', f'[DEBUG] step_callback called: {type(step_output).__name__}')
+
                 # Get current agent name from task index
                 task_idx = current_task_index['value']
                 if task_idx < len(workflow_config["tasks"]):
@@ -299,13 +301,14 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
                     if output_text and len(output_text) > 0:
                         send_progress('stream', output_text, agent_name)
             except Exception as e:
-                # Silently ignore callback errors
-                pass
+                send_progress('task', f'[DEBUG] step_callback error: {str(e)}')
 
         # Define task callback for task completion
         def task_callback(task_output):
             """Callback executed after each task - receives TaskOutput object"""
             try:
+                send_progress('task', f'[DEBUG] task_callback called: {type(task_output).__name__}')
+
                 # Get current agent name from task index
                 task_idx = current_task_index['value']
                 if task_idx < len(workflow_config["tasks"]):
