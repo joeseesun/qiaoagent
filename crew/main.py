@@ -274,12 +274,48 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
 
         send_progress('task', '开始执行工作流...')
 
-        # Create crew with verbose output capture
+        # Define step callback for streaming output
+        def step_callback(step_output):
+            """Callback executed after each step"""
+            try:
+                # step_output is a CrewAgentExecutorOutput object
+                if hasattr(step_output, 'output') and step_output.output:
+                    output_text = str(step_output.output)
+                    if output_text and len(output_text) > 0:
+                        # Send the output as a stream message
+                        agent_name = getattr(step_output, 'agent', 'Agent')
+                        send_progress('stream', output_text, str(agent_name))
+
+                # Also send action information if available
+                if hasattr(step_output, 'action') and step_output.action:
+                    action_text = str(step_output.action)
+                    if action_text and len(action_text) > 0:
+                        agent_name = getattr(step_output, 'agent', 'Agent')
+                        send_progress('thinking', f'执行: {action_text}', str(agent_name))
+            except Exception as e:
+                # Silently ignore callback errors to not break the workflow
+                pass
+
+        # Define task callback for task completion
+        def task_callback(task_output):
+            """Callback executed after each task"""
+            try:
+                if hasattr(task_output, 'raw') and task_output.raw:
+                    output_text = str(task_output.raw)
+                    if output_text and len(output_text) > 0:
+                        agent_name = getattr(task_output, 'agent', 'Agent')
+                        send_progress('output', f'任务完成: {output_text[:200]}...', str(agent_name))
+            except Exception as e:
+                pass
+
+        # Create crew with callbacks
         crew = Crew(
             agents=list(agents.values()),
             tasks=tasks,
             process=Process.sequential,
-            verbose=True
+            verbose=2,  # Maximum verbosity
+            step_callback=step_callback,
+            task_callback=task_callback
         )
 
         # Capture verbose output to send as thinking process
