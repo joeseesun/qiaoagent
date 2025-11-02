@@ -75,7 +75,7 @@ export default function Home() {
             timestamp: Date.now(),
             status: 'running'
           }])
-        } else if (data.type === 'stream') {
+        } else if (data.type === 'thinking' || data.type === 'stream') {
           // Update streaming content for the current agent
           const agent = data.agent || 'Unknown'
 
@@ -92,7 +92,7 @@ export default function Home() {
               if (existing) {
                 return prev.map(p =>
                   p === existing
-                    ? { ...p, content: (p.content || '') + message }
+                    ? { ...p, content: (p.content || '') + '\n' + message }
                     : p
                 )
               }
