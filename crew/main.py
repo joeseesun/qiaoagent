@@ -111,6 +111,7 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
         agent_callbacks = callbacks_map.get(agent_name, []) if callbacks_map else []
         if agent_callbacks:
             agent_llm.callbacks = agent_callbacks
+            agent_llm.streaming = True
 
         agent = Agent(
             role=agent_config["role"],
