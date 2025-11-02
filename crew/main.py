@@ -315,46 +315,9 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
             task_callback=task_callback
         )
 
-        # Capture verbose output to send as thinking process
-        thinking_buffer = io.StringIO()
-
-        # Execute tasks and capture thinking
-        for i, (task, task_config) in enumerate(zip(tasks, workflow_config["tasks"]), 1):
-            agent_name = task_config["agent"]
-
-            # Find the corresponding agent config
-            agent_config = None
-            for ag in workflow_config["agents"]:
-                if ag["name"] == agent_name:
-                    agent_config = ag
-                    break
-
-            send_progress('task', f'正在执行任务 {i}/{len(tasks)}...', agent_name)
-
-            # Send thinking process with correct agent info
-            if agent_config:
-                send_progress('thinking',
-                    f'分析任务: {task_config["description"][:100]}...\n'
-                    f'目标: {agent_config["goal"]}\n'
-                    f'开始推理和生成内容...',
-                    agent_name
-                )
-
-        # Execute the crew
-        try:
-            # Redirect stdout to capture verbose output
-            with redirect_stdout(thinking_buffer):
-                result = crew.kickoff()
-
-            # Send captured thinking as progress
-            thinking_output = thinking_buffer.getvalue()
-            if thinking_output:
-                # Split by agent actions if possible
-                for line in thinking_output.split('\n'):
-                    if line.strip() and len(line) > 10:
-                        send_progress('thinking', line.strip(), 'System')
-        except Exception as e:
-            result = crew.kickoff()
+        # Execute the crew (callbacks will handle progress updates)
+        send_progress('task', '开始执行 Crew...')
+        result = crew.kickoff()
 
         send_progress('output', '正在解析结果...')
 
