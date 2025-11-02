@@ -58,12 +58,14 @@ class StreamingCallbackHandler(BaseCallbackHandler):
         send_progress('output', f'任务完成', self.agent_name)
 
 def send_progress(progress_type: str, message: str, agent: str = None):
-    """Send progress update to stdout"""
+    """Send progress update to stderr with immediate flush"""
     if agent:
         progress_data = json.dumps({"type": progress_type, "message": message, "agent": agent}, ensure_ascii=False)
     else:
         progress_data = json.dumps({"type": progress_type, "message": message}, ensure_ascii=False)
-    print(f"PROGRESS:{progress_data}", file=sys.stderr, flush=True)
+    # Force immediate output by flushing stderr
+    sys.stderr.write(f"PROGRESS:{progress_data}\n")
+    sys.stderr.flush()
 
 def load_workflow_config(workflow_id: str):
     """Load workflow configuration from workflows.json"""
