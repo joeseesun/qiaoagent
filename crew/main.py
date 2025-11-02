@@ -9,7 +9,7 @@ import re
 from contextlib import redirect_stdout, redirect_stderr
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
-from langchain.callbacks.base import BaseCallbackHandler
+from langchain_core.callbacks.base import BaseCallbackHandler
 from dotenv import load_dotenv
 from crew.llm_config import llm_config_manager
 
