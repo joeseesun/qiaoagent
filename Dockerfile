@@ -16,7 +16,13 @@ RUN apt-get update && apt-get install -y \
 FROM base AS deps
 WORKDIR /app
 
-# Install Node.js dependencies
+# Install Python dependencies FIRST (changes less frequently)
+COPY requirements.txt ./
+RUN pip3 install --no-cache-dir --break-system-packages \
+    --timeout=300 --retries=10 \
+    -r requirements.txt
+
+# Install Node.js dependencies SECOND
 COPY package.json package-lock.json* ./
 # Use npm install with network optimizations for better stability
 RUN npm config set fetch-timeout 300000 && \
@@ -24,12 +30,6 @@ RUN npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm config set fetch-retries 10 && \
     npm install --legacy-peer-deps --no-audit --no-fund
-
-# Install Python dependencies
-COPY requirements.txt ./
-RUN pip3 install --no-cache-dir --break-system-packages \
-    --timeout=300 --retries=10 \
-    -r requirements.txt
 
 # Rebuild the source code only when needed
 FROM base AS builder

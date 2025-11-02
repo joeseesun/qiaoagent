@@ -1,17 +1,57 @@
-Dockerfile
-.dockerignore
-node_modules
-npm-debug.log
-README.md
-.next
+# Git
 .git
 .gitignore
+.github
+
+# Dependencies
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+.next
+dist
+build
+*.log
+
+# Environment files
 .env
 .env.local
 .env.*.local
+
+# Documentation
 *.md
+!README.md
 docs
-__pycache__
-*.pyc
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
 .DS_Store
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Scripts (不需要在镜像中)
+*.sh
+*.bat
+
+# Test files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage
+
+# Misc
+.cache
+tmp
+temp
 
