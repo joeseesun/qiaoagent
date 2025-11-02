@@ -58,8 +58,8 @@ RUN useradd --system --uid 1001 -g nodejs nextjs
 # Copy the entire Python lib directory to ensure all packages are included
 COPY --from=deps /usr/local/lib/python3.11 /usr/local/lib/python3.11
 
-# Copy Next.js build output
-COPY --from=builder /app/public ./public
+# Copy Next.js build output and public files
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
@@ -70,6 +70,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/crew ./crew
 COPY --from=builder --chown=nextjs:nodejs /app/api ./api
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
+
+# Ensure Python packages are readable by nextjs user
+RUN chmod -R 755 /usr/local/lib/python3.11
 
 USER nextjs
 
