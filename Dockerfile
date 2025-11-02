@@ -54,8 +54,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs nextjs
 
-# Copy Python site-packages (Debian uses dist-packages)
-COPY --from=deps /usr/local/lib/python3.*/site-packages /usr/local/lib/python3.11/site-packages
+# Copy Python dependencies from deps stage
+# Copy the entire Python lib directory to ensure all packages are included
+COPY --from=deps /usr/local/lib/python3.11 /usr/local/lib/python3.11
 
 # Copy Next.js build output
 COPY --from=builder /app/public ./public
