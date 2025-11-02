@@ -20,8 +20,20 @@ class LLMConfigManager:
         self.workflow_models_config_path = os.path.join(
             os.path.dirname(__file__), '..', 'config', 'workflow-models.json'
         )
-        self.providers = self._load_providers()
-        self.workflow_models = self._load_workflow_models()
+        # Don't cache configs - reload on each access for hot-reload support
+        self._providers_cache = None
+        self._workflow_models_cache = None
+        self._cache_timestamp = 0
+
+    @property
+    def providers(self) -> Dict:
+        """Get providers with hot-reload support"""
+        return self._load_providers()
+
+    @property
+    def workflow_models(self) -> Dict:
+        """Get workflow models with hot-reload support"""
+        return self._load_workflow_models()
     
     def _load_providers(self) -> Dict:
         """Load LLM providers configuration"""
@@ -151,8 +163,8 @@ class LLMConfigManager:
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
-            openai_api_base=provider['baseURL'],
-            openai_api_key=provider['apiKey'],
+            base_url=provider['baseURL'],
+            api_key=provider['apiKey'],
             streaming=True,
         )
     
@@ -188,8 +200,8 @@ class LLMConfigManager:
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
-            openai_api_base=provider['baseURL'],
-            openai_api_key=provider['apiKey'],
+            base_url=provider['baseURL'],
+            api_key=provider['apiKey'],
             streaming=True,
         )
 
