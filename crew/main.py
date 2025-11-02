@@ -276,35 +276,32 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
 
         # Define step callback for streaming output
         def step_callback(step_output):
-            """Callback executed after each step"""
+            """Callback executed after each step - receives AgentFinish object"""
             try:
-                # step_output is a CrewAgentExecutorOutput object
-                if hasattr(step_output, 'output') and step_output.output:
-                    output_text = str(step_output.output)
-                    if output_text and len(output_text) > 0:
-                        # Send the output as a stream message
-                        agent_name = getattr(step_output, 'agent', 'Agent')
-                        send_progress('stream', output_text, str(agent_name))
+                # step_output is an AgentFinish object with: output, text, thought
+                if hasattr(step_output, 'thought') and step_output.thought:
+                    thought_text = str(step_output.thought).strip()
+                    if thought_text and len(thought_text) > 10:
+                        send_progress('thinking', thought_text, 'Agent')
 
-                # Also send action information if available
-                if hasattr(step_output, 'action') and step_output.action:
-                    action_text = str(step_output.action)
-                    if action_text and len(action_text) > 0:
-                        agent_name = getattr(step_output, 'agent', 'Agent')
-                        send_progress('thinking', f'执行: {action_text}', str(agent_name))
+                if hasattr(step_output, 'output') and step_output.output:
+                    output_text = str(step_output.output).strip()
+                    if output_text and len(output_text) > 0:
+                        send_progress('stream', output_text, 'Agent')
             except Exception as e:
-                # Silently ignore callback errors to not break the workflow
+                # Silently ignore callback errors
                 pass
 
         # Define task callback for task completion
         def task_callback(task_output):
-            """Callback executed after each task"""
+            """Callback executed after each task - receives TaskOutput object"""
             try:
-                if hasattr(task_output, 'raw') and task_output.raw:
-                    output_text = str(task_output.raw)
-                    if output_text and len(output_text) > 0:
-                        agent_name = getattr(task_output, 'agent', 'Agent')
-                        send_progress('output', f'任务完成: {output_text[:200]}...', str(agent_name))
+                # task_output is a TaskOutput object, convert to string
+                output_text = str(task_output).strip()
+                if output_text and len(output_text) > 0:
+                    # Limit output length for progress message
+                    preview = output_text[:300] + '...' if len(output_text) > 300 else output_text
+                    send_progress('output', f'✅ 任务完成\n{preview}', 'Agent')
             except Exception as e:
                 pass
 
