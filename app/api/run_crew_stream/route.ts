@@ -16,8 +16,24 @@ export async function GET(request: NextRequest) {
   
   const stream = new ReadableStream({
     async start(controller) {
+      let isClosed = false
+
       const sendEvent = (data: any) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        if (!isClosed) {
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+          } catch (e) {
+            // Controller already closed, ignore
+            isClosed = true
+          }
+        }
+      }
+
+      const closeController = () => {
+        if (!isClosed) {
+          isClosed = true
+          controller.close()
+        }
       }
 
       try {
@@ -95,7 +111,7 @@ except Exception as e:
         python.on('close', (code) => {
           if (code !== 0) {
             sendEvent({ type: 'error', message: stderr || 'Python script failed' })
-            controller.close()
+            closeController()
           } else {
             try {
               // Extract JSON result from stdout
@@ -113,18 +129,18 @@ except Exception as e:
             } catch (e) {
               sendEvent({ type: 'error', message: 'Failed to parse Python output' })
             }
-            controller.close()
+            closeController()
           }
         })
 
         python.on('error', (error) => {
           sendEvent({ type: 'error', message: error.message })
-          controller.close()
+          closeController()
         })
 
       } catch (error: any) {
         sendEvent({ type: 'error', message: error.message || 'Unknown error' })
-        controller.close()
+        closeController()
       }
     },
   })
