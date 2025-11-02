@@ -159,14 +159,47 @@ class LLMConfigManager:
             model = provider.get('defaultModel', 'gpt-4')
         
         # Create and return LLM instance
-        return ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            base_url=provider['baseURL'],
-            api_key=provider['apiKey'],
-            streaming=True,
-        )
+        # Note: LangChain/OpenAI SDK reads OPENAI_API_BASE and OPENAI_API_KEY
+        # from environment variables, which may override our parameters.
+        # We need to temporarily clear these env vars when creating the client.
+
+        # Save original env vars
+        original_base = os.environ.get('OPENAI_API_BASE')
+        original_key = os.environ.get('OPENAI_API_KEY')
+        original_base_url = os.environ.get('OPENAI_BASE_URL')
+
+        try:
+            # Temporarily set env vars to our provider's values
+            os.environ['OPENAI_API_BASE'] = provider['baseURL']
+            os.environ['OPENAI_BASE_URL'] = provider['baseURL']
+            os.environ['OPENAI_API_KEY'] = provider['apiKey']
+
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                base_url=provider['baseURL'],
+                api_key=provider['apiKey'],
+                streaming=True,
+            )
+
+            return llm
+        finally:
+            # Restore original env vars
+            if original_base is not None:
+                os.environ['OPENAI_API_BASE'] = original_base
+            elif 'OPENAI_API_BASE' in os.environ:
+                del os.environ['OPENAI_API_BASE']
+
+            if original_base_url is not None:
+                os.environ['OPENAI_BASE_URL'] = original_base_url
+            elif 'OPENAI_BASE_URL' in os.environ:
+                del os.environ['OPENAI_BASE_URL']
+
+            if original_key is not None:
+                os.environ['OPENAI_API_KEY'] = original_key
+            elif 'OPENAI_API_KEY' in os.environ:
+                del os.environ['OPENAI_API_KEY']
     
     def get_default_llm(
         self,
@@ -196,14 +229,41 @@ class LLMConfigManager:
             }
             model = os.getenv('OPENAI_MODEL_NAME', 'claude-sonnet-4.5')
         
-        return ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            base_url=provider['baseURL'],
-            api_key=provider['apiKey'],
-            streaming=True,
-        )
+        # Temporarily set env vars to prevent override
+        original_base = os.environ.get('OPENAI_API_BASE')
+        original_key = os.environ.get('OPENAI_API_KEY')
+        original_base_url = os.environ.get('OPENAI_BASE_URL')
+
+        try:
+            os.environ['OPENAI_API_BASE'] = provider['baseURL']
+            os.environ['OPENAI_BASE_URL'] = provider['baseURL']
+            os.environ['OPENAI_API_KEY'] = provider['apiKey']
+
+            llm = ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                base_url=provider['baseURL'],
+                api_key=provider['apiKey'],
+                streaming=True,
+            )
+
+            return llm
+        finally:
+            if original_base is not None:
+                os.environ['OPENAI_API_BASE'] = original_base
+            elif 'OPENAI_API_BASE' in os.environ:
+                del os.environ['OPENAI_API_BASE']
+
+            if original_base_url is not None:
+                os.environ['OPENAI_BASE_URL'] = original_base_url
+            elif 'OPENAI_BASE_URL' in os.environ:
+                del os.environ['OPENAI_BASE_URL']
+
+            if original_key is not None:
+                os.environ['OPENAI_API_KEY'] = original_key
+            elif 'OPENAI_API_KEY' in os.environ:
+                del os.environ['OPENAI_API_KEY']
 
 # Global instance
 llm_config_manager = LLMConfigManager()
