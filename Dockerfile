@@ -29,7 +29,9 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 # Install Node.js dependencies SECOND
 COPY package.json package-lock.json* ./
 # Use npm install with network optimizations for better stability
-RUN npm config set fetch-timeout 300000 && \
+# Use Taobao mirror for better connectivity in China
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fetch-timeout 300000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm config set fetch-retries 10 && \
