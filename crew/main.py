@@ -99,19 +99,47 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
     for agent_config in workflow_config.get("agents", []):
         agent_name = agent_config["name"]
 
-        # Get LLM for this specific agent from configuration
-        agent_llm = llm_config_manager.get_llm_for_agent(
-            workflow_id=workflow_id,
-            agent_name=agent_name,
-            temperature=0.7,
-            max_tokens=4000
-        )
+        # Get provider config for this agent
+        workflow_model_config = llm_config_manager.workflow_models.get(workflow_id)
 
-        # Add streaming callback for this agent
-        agent_callbacks = callbacks_map.get(agent_name, []) if callbacks_map else []
-        if agent_callbacks:
-            agent_llm.callbacks = agent_callbacks
-            agent_llm.streaming = True
+        # Determine provider and model
+        provider_id = None
+        model = None
+
+        if workflow_model_config:
+            # Check agent-specific config
+            for ac in workflow_model_config.get('agentConfigs', []):
+                if ac['agentName'] == agent_name:
+                    provider_id = ac['providerId']
+                    model = ac['model']
+                    break
+
+            # Use workflow default if no agent-specific config
+            if not provider_id:
+                provider_id = workflow_model_config.get('defaultProviderId')
+                model = workflow_model_config.get('defaultModel')
+
+        # Get provider config
+        if provider_id and provider_id in llm_config_manager.providers:
+            provider = llm_config_manager.providers[provider_id]
+            if not model:
+                model = provider.get('defaultModel')
+
+            # Create LLM config dict for CrewAI
+            llm_config = {
+                "model": model,
+                "base_url": provider['baseURL'],
+                "api_key": provider['apiKey'],
+                "temperature": 0.7,
+            }
+        else:
+            # Fallback to environment variables
+            llm_config = {
+                "model": os.getenv("OPENAI_MODEL_NAME", "claude-sonnet-4-5-20250929"),
+                "base_url": os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
+                "api_key": os.getenv("OPENAI_API_KEY"),
+                "temperature": 0.7,
+            }
 
         agent = Agent(
             role=agent_config["role"],
@@ -119,7 +147,7 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
             backstory=agent_config.get("prompt", ""),
             verbose=True,
             allow_delegation=False,
-            llm=agent_llm
+            llm=llm_config
         )
         agents[agent_name] = agent
 
