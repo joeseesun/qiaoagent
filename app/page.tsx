@@ -78,13 +78,15 @@ export default function Home() {
         } else if (data.type === 'thinking' || data.type === 'stream') {
           // Update streaming content for the current agent
           const agent = data.agent || 'Unknown'
-
-          // Filter out CrewAI internal thinking patterns
           let message = data.message || ''
-          // Remove various forms of CrewAI internal thoughts
-          message = message.replace(/Thought:\s*I now can give a great answer[\s\n]*Final Answer:\s*/gi, '')
-          message = message.replace(/Thought:\s*I now can give a great answer[\s\n]*/gi, '')
-          message = message.replace(/Final Answer:\s*/gi, '')
+
+          // Only filter for stream messages, not thinking messages
+          if (data.type === 'stream') {
+            // Remove various forms of CrewAI internal thoughts
+            message = message.replace(/Thought:\s*I now can give a great answer[\s\n]*Final Answer:\s*/gi, '')
+            message = message.replace(/Thought:\s*I now can give a great answer[\s\n]*/gi, '')
+            message = message.replace(/Final Answer:\s*/gi, '')
+          }
 
           if (message.trim()) {
             setAgentProcesses(prev => {

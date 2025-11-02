@@ -97,12 +97,16 @@ except Exception as e:
               const progressData = line.replace('PROGRESS:', '').trim()
               try {
                 const progressJson = JSON.parse(progressData)
+                // Log thinking and stream messages for debugging
+                if (progressJson.type === 'thinking' || progressJson.type === 'stream') {
+                  console.log('[SSE] Sending:', progressJson.type, 'for agent:', progressJson.agent)
+                }
                 sendEvent(progressJson)
               } catch (e) {
                 // Ignore parse errors
               }
-            } else if (line.trim() && !line.includes('WARNING')) {
-              // Send other stderr output as task messages
+            } else if (line.trim() && !line.includes('WARNING') && !line.includes('╭') && !line.includes('│') && !line.includes('╰') && !line.includes('└') && !line.includes('🚀')) {
+              // Send other stderr output as task messages (filter out CrewAI UI elements)
               sendEvent({ type: 'task', message: line.trim() })
             }
           }
