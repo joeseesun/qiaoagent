@@ -330,7 +330,7 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
             agents=list(agents.values()),
             tasks=tasks,
             process=Process.sequential,
-            verbose=2,  # Maximum verbosity
+            verbose=True,
             step_callback=step_callback,
             task_callback=task_callback
         )
