@@ -46,7 +46,7 @@ except Exception as e:
     sys.exit(1)
 `
 
-        const python = spawn('python', ['-u', '-c', pythonScript])
+        const python = spawn('python3', ['-u', '-c', pythonScript])
 
         let stdout = ''
         let stderr = ''

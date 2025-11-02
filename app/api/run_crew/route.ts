@@ -31,7 +31,7 @@ function runPythonScript(topic: string, workflowId: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(process.cwd(), 'crew', 'main.py')
     
-    const python = spawn('python', [
+    const python = spawn('python3', [
       '-c',
       `
 import sys

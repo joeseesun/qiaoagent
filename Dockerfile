@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/python3 /usr/bin/python
 
 # Install dependencies only when needed
 FROM base AS deps
