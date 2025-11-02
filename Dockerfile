@@ -84,9 +84,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 # Ensure Python packages are readable by nextjs user
 RUN chmod -R 755 /usr/local/lib/python3.11
 
-# Create and set permissions for CrewAI data directory
+# Create and set permissions for CrewAI data directory and config
 RUN mkdir -p /home/nextjs/.local/share && \
-    chown -R nextjs:nodejs /home/nextjs
+    chown -R nextjs:nodejs /home/nextjs && \
+    chown -R nextjs:nodejs /app/config && \
+    chmod -R 755 /app/config
 
 USER nextjs
 

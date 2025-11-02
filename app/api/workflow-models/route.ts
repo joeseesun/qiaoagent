@@ -16,14 +16,37 @@ function ensureConfigDir() {
 // Load workflow model configs from file
 function loadWorkflowConfigs(): WorkflowModelConfig[] {
   ensureConfigDir()
-  
+
   if (!fs.existsSync(CONFIG_FILE)) {
     return []
   }
-  
+
   try {
     const data = fs.readFileSync(CONFIG_FILE, 'utf-8')
-    return JSON.parse(data)
+    const parsed = JSON.parse(data)
+
+    // Validate and fix the structure
+    if (!Array.isArray(parsed)) {
+      console.error('Invalid workflow-models.json: root is not an array')
+      return []
+    }
+
+    // Flatten any nested arrays (fix corrupted data)
+    const flattened: WorkflowModelConfig[] = []
+    for (const item of parsed) {
+      if (Array.isArray(item)) {
+        // Nested array found, flatten it
+        console.warn('Found nested array in workflow-models.json, flattening...')
+        flattened.push(...item)
+      } else if (item && typeof item === 'object' && item.workflowId) {
+        // Valid config object
+        flattened.push(item)
+      } else {
+        console.warn('Invalid item in workflow-models.json:', item)
+      }
+    }
+
+    return flattened
   } catch (error) {
     console.error('Error loading workflow model configs:', error)
     return []
