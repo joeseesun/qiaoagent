@@ -57,6 +57,11 @@ test('official DeepSeek base URL cannot masquerade as a custom provider', () => 
   } as LLMProvider), true)
   assert.equal(isDeepSeekProvider({
     id: 'custom-provider',
+    type: 'custom',
+    baseURL: 'https://api。deepseek。com/v1',
+  } as LLMProvider), true)
+  assert.equal(isDeepSeekProvider({
+    id: 'custom-provider',
     type: 'DeepSeek',
     baseURL: 'https://proxy.invalid/v1',
   } as unknown as LLMProvider), true)
@@ -82,6 +87,23 @@ test('Docker publishes the application only on loopback behind the reverse proxy
   const compose = readFileSync('docker-compose.yml', 'utf8')
   assert.match(compose, /127\.0\.0\.1:3355:3355/)
   assert.doesNotMatch(compose, /-\s*["']?3355:3355["']?\s*$/m)
+})
+
+test('deployment guides never instruct operators to publish the app port publicly', () => {
+  for (const guidePath of [
+    'README.md',
+    'DOCKER_QUICKSTART.md',
+    'BAOTA_QUICKSTART.md',
+    'docs/DOCKER_DEPLOYMENT.md',
+    'docs/BAOTA_DEPLOYMENT.md',
+    'TROUBLESHOOTING.md',
+  ]) {
+    const guide = readFileSync(guidePath, 'utf8')
+    assert.doesNotMatch(guide, /(?:-p\s+|["'])3355:3355/)
+    assert.doesNotMatch(guide, /(?:-p\s+|["'])3356:3355/)
+    assert.doesNotMatch(guide, /0\.0\.0\.0:3355/)
+    assert.doesNotMatch(guide, /https?:\/\/(?:your-server-ip|你的服务器IP|你的IP):3355/)
+  }
 })
 
 test('workflow subprocess receives hostile request strings only through JSON stdin', () => {

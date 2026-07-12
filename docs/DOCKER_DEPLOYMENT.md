@@ -60,9 +60,13 @@ docker-compose --env-file .env.production up -d
 docker-compose logs -f
 ```
 
-**4. 访问应用**
+**4. 验证本机监听**
 
-打开浏览器访问：`http://your-server-ip:3355`
+```bash
+curl -I http://127.0.0.1:3355
+```
+
+不要对公网开放 `3355`；请按下方说明配置 Nginx 反向代理和 HTTPS 后再访问。
 
 ### 方法二：使用 Docker 命令
 
@@ -78,7 +82,7 @@ docker build -t qiaoagent:latest .
 docker run -d \
   --name qiaoagent \
   --restart unless-stopped \
-  -p 3355:3355 \
+  -p 127.0.0.1:3355:3355 \
   -e OPENAI_API_KEY=sk-your-api-key \
   -e ADMIN_PASSWORD=your-password \
   -e TUZI_API_KEY=sk-your-tuzi-key \
@@ -200,7 +204,7 @@ server {
     server_name your-domain.com;  # 替换为你的域名
 
     location / {
-        proxy_pass http://localhost:3355;
+        proxy_pass http://127.0.0.1:3355;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -236,10 +240,10 @@ sudo certbot --nginx -d your-domain.com
 1. **使用强密码**
    - `ADMIN_PASSWORD` 应该是强密码（至少 16 位，包含大小写字母、数字、特殊字符）
 
-2. **限制端口访问**
+2. **禁止公网访问应用端口**
    ```bash
-   # 使用防火墙只允许特定 IP 访问
-   sudo ufw allow from your-ip to any port 3355
+   # 端口已绑定 loopback；防火墙再显式拒绝公网直连
+   sudo ufw deny 3355/tcp
    ```
 
 3. **定期更新**
@@ -341,4 +345,3 @@ docker-compose build --no-cache
 ---
 
 **祝部署顺利！** 🎉
-

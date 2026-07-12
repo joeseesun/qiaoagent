@@ -7,7 +7,7 @@ import os
 from typing import Dict, Optional
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
-from crew.provider_security import lock_provider_and_model
+from crew.provider_security import lock_provider_and_model, resolve_provider_or_fallback
 
 load_dotenv()
 
@@ -144,20 +144,22 @@ class LLMConfigManager:
                 provider_id = workflow_config.get('defaultProviderId')
                 model = workflow_config.get('defaultModel')
         
-        # If still no provider, use the first enabled provider
-        if not provider_id and self.providers:
-            provider_id = list(self.providers.keys())[0]
-        
-        # Get provider config
-        if provider_id and provider_id in self.providers:
-            provider = self.providers[provider_id]
-        else:
-            # Fallback to environment variables
-            provider = {
-                'baseURL': os.getenv('OPENAI_API_BASE', 'https://api.tu-zi.com/v1'),
-                'apiKey': os.getenv('OPENAI_API_KEY', ''),
-                'defaultModel': os.getenv('OPENAI_MODEL_NAME', 'claude-sonnet-4.5'),
-            }
+        providers = self.providers
+
+        # If still no provider, use the first enabled provider.
+        if not provider_id and providers:
+            provider_id = next(iter(providers))
+
+        fallback_provider = {
+            'id': 'environment',
+            'type': 'custom',
+            'baseURL': os.getenv('OPENAI_API_BASE', 'https://api.tu-zi.com/v1'),
+            'apiKey': os.getenv('OPENAI_API_KEY', ''),
+            'defaultModel': os.getenv('OPENAI_MODEL_NAME', 'claude-sonnet-4.5'),
+        }
+        provider = resolve_provider_or_fallback(
+            provider_id, providers, fallback_provider
+        )
         
         # Use provider's default model if not specified
         if not model:
@@ -224,9 +226,10 @@ class LLMConfigManager:
             ChatOpenAI instance with default configuration
         """
         # Use first enabled provider
-        if self.providers:
-            provider_id = list(self.providers.keys())[0]
-            provider = self.providers[provider_id]
+        providers = self.providers
+        if providers:
+            provider_id = next(iter(providers))
+            provider = providers[provider_id]
             model = provider.get('defaultModel', 'gpt-4')
         else:
             # Fallback to environment variables

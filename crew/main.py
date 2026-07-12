@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.callbacks.base import BaseCallbackHandler
 from dotenv import load_dotenv
 from crew.llm_config import llm_config_manager
-from crew.provider_security import lock_provider_and_model
+from crew.provider_security import lock_provider_and_model, resolve_provider_or_fallback
 
 load_dotenv()
 
@@ -130,24 +130,26 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
                 provider_id = workflow_model_config.get('defaultProviderId')
                 model = workflow_model_config.get('defaultModel')
 
-        # Get provider config
-        if provider_id and provider_id in llm_config_manager.providers:
-            provider = llm_config_manager.providers[provider_id]
+        providers = llm_config_manager.providers
+        fallback_provider = {
+            "id": "environment",
+            "type": "custom",
+            "baseURL": os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
+            "apiKey": os.getenv("OPENAI_API_KEY"),
+        }
+        provider = resolve_provider_or_fallback(
+            provider_id, providers, fallback_provider
+        )
+
+        if provider_id:
             if not model:
                 model = provider.get('defaultModel')
         else:
-            # Fallback to environment variables
-            provider = {
-                "id": "environment",
-                "type": "custom",
-                "baseURL": os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
-                "apiKey": os.getenv("OPENAI_API_KEY"),
-            }
             if not model:
                 model = os.getenv("OPENAI_MODEL_NAME", "claude-sonnet-4-5-20250929")
 
-        # Every branch, including environment fallback, passes through the
-        # official DeepSeek endpoint/model lock before constructing an LLM.
+        # The provider identity and its credentials are resolved atomically
+        # before the official DeepSeek endpoint/model lock is applied.
         provider, model = lock_provider_and_model(provider_id, provider, model)
         agent_llm = LLM(
             model=f"openai/{model}",
