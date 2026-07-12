@@ -75,7 +75,8 @@ KIMI_API_BASE=https://api.moonshot.cn/v1
 DEEPSEEK_API_KEY=your-deepseek-api-key-here
 
 # Base URL (可选)
-DEEPSEEK_API_BASE=https://api.deepseek.com/v1
+# DeepSeek 的 endpoint 固定为 https://api.deepseek.com/v1，不支持环境变量覆盖
+# DeepSeek endpoint is locked to https://api.deepseek.com/v1 and cannot be overridden
 ```
 
 ### 智谱 AI (Zhipu AI)
@@ -400,4 +401,3 @@ npm run dev
 MY_NEW_PROVIDER_API_KEY=your-key-here
 MY_NEW_PROVIDER_API_BASE=https://api.example.com/v1
 ```
-

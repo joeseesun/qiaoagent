@@ -2,8 +2,55 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { WorkflowModelConfig } from '@/types/llm'
+import { requireAdminRequest } from '@/lib/admin-auth'
+import {
+  isDeepSeekProvider,
+  lockDeepSeekWorkflowConfig,
+} from '@/lib/llm-provider-security'
 
 const CONFIG_FILE = path.join(process.cwd(), 'config', 'workflow-models.json')
+const PROVIDERS_FILE = path.join(process.cwd(), 'config', 'llm-providers.json')
+
+function loadDeepSeekProviderIds(): Set<string> {
+  const providerIds = new Set(['deepseek'])
+
+  try {
+    const providers = JSON.parse(fs.readFileSync(PROVIDERS_FILE, 'utf-8'))
+    if (Array.isArray(providers)) {
+      for (const provider of providers) {
+        if (provider?.id && provider?.type && isDeepSeekProvider(provider)) {
+          providerIds.add(String(provider.id).toLowerCase())
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading DeepSeek provider IDs:', error)
+  }
+
+  return providerIds
+}
+
+function isWorkflowModelConfig(value: unknown): value is WorkflowModelConfig {
+  if (!value || typeof value !== 'object') return false
+  const config = value as Partial<WorkflowModelConfig>
+  return Boolean(
+    typeof config.workflowId === 'string' && config.workflowId &&
+    typeof config.defaultProviderId === 'string' &&
+    typeof config.defaultModel === 'string' &&
+    Array.isArray(config.agentConfigs) &&
+    config.agentConfigs.every(agentConfig =>
+      agentConfig &&
+      typeof agentConfig.agentName === 'string' &&
+      typeof agentConfig.providerId === 'string' &&
+      typeof agentConfig.model === 'string'
+    )
+  )
+}
+
+function usesForbiddenDeepSeekPro(config: WorkflowModelConfig): boolean {
+  return config.defaultModel === 'deepseek-v4-pro' ||
+    config.agentConfigs.some(agentConfig => agentConfig.model === 'deepseek-v4-pro')
+}
 
 // Ensure config directory exists
 function ensureConfigDir() {
@@ -90,23 +137,43 @@ export async function GET(request: NextRequest) {
 
 // POST - Create or update workflow model config
 export async function POST(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const configs = loadWorkflowConfigs()
-    
-    const index = configs.findIndex(c => c.workflowId === body.workflowId)
-    
-    if (index !== -1) {
-      // Update existing config
-      configs[index] = body
-    } else {
-      // Create new config
-      configs.push(body)
+
+    const submittedConfigs = Array.isArray(body) ? body : [body]
+    if (submittedConfigs.length === 0 || !submittedConfigs.every(isWorkflowModelConfig)) {
+      return NextResponse.json({ error: 'Invalid workflow model config' }, { status: 400 })
     }
-    
+
+    if (submittedConfigs.some(usesForbiddenDeepSeekPro)) {
+      return NextResponse.json(
+        { error: 'deepseek-v4-pro is forbidden; use deepseek-v4-flash.' },
+        { status: 400 }
+      )
+    }
+
+    const deepSeekProviderIds = loadDeepSeekProviderIds()
+    const lockedConfigs = submittedConfigs.map(config =>
+      lockDeepSeekWorkflowConfig(config, deepSeekProviderIds)
+    )
+
+    for (const config of lockedConfigs) {
+      const index = configs.findIndex(existing => existing.workflowId === config.workflowId)
+
+      if (index !== -1) {
+        configs[index] = config
+      } else {
+        configs.push(config)
+      }
+    }
+
     saveWorkflowConfigs(configs)
-    
-    return NextResponse.json(body)
+
+    return NextResponse.json(Array.isArray(body) ? lockedConfigs : lockedConfigs[0])
   } catch (error) {
     console.error('Error in POST /api/workflow-models:', error)
     return NextResponse.json(
@@ -118,6 +185,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Delete workflow model config
 export async function DELETE(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const workflowId = searchParams.get('workflowId')
@@ -143,4 +213,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-

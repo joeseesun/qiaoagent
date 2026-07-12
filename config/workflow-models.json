@@ -28,8 +28,8 @@
     "agentConfigs": [
       {
         "agentName": "ContentAnalyzer",
-        "providerId": "provider_1762002098632",
-        "model": "deepseek-chat"
+        "providerId": "deepseek",
+        "model": "deepseek-v4-flash"
       },
       {
         "agentName": "TitleOptimizer",

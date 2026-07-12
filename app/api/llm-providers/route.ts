@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { LLMProvider, DEFAULT_LLM_PROVIDERS } from '@/types/llm'
+import { requireAdminRequest } from '@/lib/admin-auth'
+import {
+  lockDeepSeekProvider,
+  sanitizeProvider,
+} from '@/lib/llm-provider-security'
 
 const CONFIG_FILE = path.join(process.cwd(), 'config', 'llm-providers.json')
 
@@ -25,7 +30,10 @@ function loadProviders(): LLMProvider[] {
   
   try {
     const data = fs.readFileSync(CONFIG_FILE, 'utf-8')
-    return JSON.parse(data)
+    const providers = JSON.parse(data)
+    return Array.isArray(providers)
+      ? providers.map(provider => lockDeepSeekProvider(provider))
+      : DEFAULT_LLM_PROVIDERS.map(provider => lockDeepSeekProvider(provider))
   } catch (error) {
     console.error('Error loading LLM providers:', error)
     return DEFAULT_LLM_PROVIDERS
@@ -37,7 +45,8 @@ function saveProviders(providers: LLMProvider[]) {
   ensureConfigDir()
   
   try {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(providers, null, 2), 'utf-8')
+    const lockedProviders = providers.map(provider => lockDeepSeekProvider(provider))
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(lockedProviders, null, 2), 'utf-8')
   } catch (error) {
     console.error('Error saving LLM providers:', error)
     throw error
@@ -50,10 +59,7 @@ export async function GET(request: NextRequest) {
     const providers = loadProviders()
     
     // Don't expose API keys in the response
-    const sanitizedProviders = providers.map(p => ({
-      ...p,
-      apiKey: p.apiKey ? '***' + p.apiKey.slice(-4) : '',
-    }))
+    const sanitizedProviders = providers.map(provider => sanitizeProvider(provider))
     
     return NextResponse.json(sanitizedProviders)
   } catch (error) {
@@ -67,6 +73,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Create a new LLM provider
 export async function POST(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const providers = loadProviders()
@@ -74,12 +83,16 @@ export async function POST(request: NextRequest) {
     // Generate provider ID if not provided
     const providerId = body.id || `provider_${Date.now()}`
 
+    if (!/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(providerId)) {
+      return NextResponse.json({ error: 'Invalid provider ID' }, { status: 400 })
+    }
+
     // Generate placeholder for API key
     // SECURITY: Never save real API keys to JSON file
     // Users should set API keys via environment variables
     const apiKeyPlaceholder = `your-${providerId.toLowerCase().replace(/_/g, '-')}-api-key-here`
 
-    const newProvider: LLMProvider = {
+    const newProvider = lockDeepSeekProvider<LLMProvider>({
       id: providerId,
       name: body.name,
       type: body.type,
@@ -91,14 +104,14 @@ export async function POST(request: NextRequest) {
       description: body.description,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    }
+    })
 
     providers.push(newProvider)
     saveProviders(providers)
 
     // Return the provider with instructions
     return NextResponse.json({
-      ...newProvider,
+      ...sanitizeProvider(newProvider),
       _instructions: {
         message: 'Provider created successfully. Please set API key via environment variable.',
         envVarName: `${providerId.toUpperCase()}_API_KEY`,
@@ -116,6 +129,9 @@ export async function POST(request: NextRequest) {
 
 // PUT - Update an existing LLM provider
 export async function PUT(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const providers = loadProviders()
@@ -135,18 +151,18 @@ export async function PUT(request: NextRequest) {
       ? currentProvider.apiKey
       : `your-${body.id.toLowerCase().replace(/_/g, '-')}-api-key-here`
 
-    providers[index] = {
+    providers[index] = lockDeepSeekProvider({
       ...providers[index],
       ...body,
       apiKey: apiKeyPlaceholder, // Always preserve/use placeholder
       updatedAt: Date.now(),
-    }
+    })
 
     saveProviders(providers)
 
     // Return with instructions
     return NextResponse.json({
-      ...providers[index],
+      ...sanitizeProvider(providers[index]),
       _instructions: {
         message: 'Provider updated successfully. API key should be set via environment variable.',
         envVarName: `${body.id.toUpperCase()}_API_KEY`,
@@ -164,6 +180,9 @@ export async function PUT(request: NextRequest) {
 
 // DELETE - Delete an LLM provider
 export async function DELETE(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -196,4 +215,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-

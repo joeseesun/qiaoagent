@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 import json
 import os
+import hmac
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,13 +40,16 @@ async def update_config(request: ConfigUpdateRequest):
     """Update workflow configuration (requires admin password)"""
     try:
         # Verify admin password
-        admin_password = os.getenv("ADMIN_PASSWORD", "ai_admin_2025")
-        
-        if request.password != admin_password:
+        admin_password = os.getenv("ADMIN_PASSWORD")
+
+        if not admin_password or admin_password in {"ai_admin_2025", "your-secure-password-here"}:
             return JSONResponse(
-                status_code=401,
-                content={"error": "Unauthorized"}
+                status_code=403,
+                content={"error": "Admin mutations are disabled"}
             )
+
+        if not hmac.compare_digest(request.password, admin_password):
+            return JSONResponse(status_code=403, content={"error": "Forbidden"})
         
         # Update workflows.json
         workflows_path = os.path.join(os.path.dirname(__file__), '..', 'public', 'workflows.json')
@@ -62,4 +66,3 @@ async def update_config(request: ConfigUpdateRequest):
             status_code=500,
             content={"error": str(e)}
         )
-

@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { useToast } from '@/components/ui/toast'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { LLMProvider, WorkflowModelConfig, AgentModelConfig } from '@/types/llm'
+import { getAdminAuthHeaders } from '@/lib/admin-client'
 
 interface Agent {
   name: string
@@ -135,11 +136,15 @@ export default function AdminDashboard() {
 
     // Save to backend
     try {
-      await fetch('/api/workflow-models', {
+      const response = await fetch('/api/workflow-models', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
+        },
         body: JSON.stringify([newConfig]),
       })
+      if (!response.ok) throw new Error('Failed to save workflow default model')
       toast({
         title: '保存成功',
         description: '工作流默认模型已更新',
@@ -178,11 +183,15 @@ export default function AdminDashboard() {
 
     // Save to backend
     try {
-      await fetch('/api/workflow-models', {
+      const response = await fetch('/api/workflow-models', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
+        },
         body: JSON.stringify([newConfig]),
       })
+      if (!response.ok) throw new Error('Failed to save agent model config')
     } catch (error) {
       console.error('Failed to save model config:', error)
       toast({
@@ -211,6 +220,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
         },
         body: JSON.stringify({
           workflows,
@@ -273,6 +283,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
         },
         body: JSON.stringify({ workflows: newWorkflows, password }),
       })
@@ -1044,4 +1055,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-

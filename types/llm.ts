@@ -123,12 +123,9 @@ export const LLM_PROVIDER_TEMPLATES: Record<LLMProviderType, Partial<LLMProvider
   deepseek: {
     type: 'deepseek',
     baseURL: 'https://api.deepseek.com/v1',
-    models: [
-      'deepseek-chat',
-      'deepseek-coder',
-    ],
-    defaultModel: 'deepseek-chat',
-    description: 'DeepSeek Models',
+    models: ['deepseek-v4-flash'],
+    defaultModel: 'deepseek-v4-flash',
+    description: 'DeepSeek official API - Flash only',
   },
   zhipu: {
     type: 'zhipu',
@@ -252,4 +249,3 @@ export const DEFAULT_LLM_PROVIDERS: LLMProvider[] = [
     description: 'Tu-Zi API (Claude Sonnet 4.5)',
   },
 ]
-

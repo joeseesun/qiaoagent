@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import { LLMProvider } from '@/types/llm'
+import { lockDeepSeekProvider, sanitizeProvider } from '@/lib/llm-provider-security'
 
 const CONFIG_FILE = path.join(process.cwd(), 'config', 'llm-providers.json')
 
@@ -20,7 +21,7 @@ function loadProviders(): LLMProvider[] {
   }
 }
 
-// GET - Get a specific LLM provider (with full API key)
+// GET - Get a specific LLM provider without exposing credentials
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -36,7 +37,7 @@ export async function GET(
       )
     }
     
-    return NextResponse.json(provider)
+    return NextResponse.json(sanitizeProvider(lockDeepSeekProvider(provider)))
   } catch (error) {
     console.error('Error in GET /api/llm-providers/[id]:', error)
     return NextResponse.json(
@@ -45,4 +46,3 @@ export async function GET(
     )
   }
 }
-
