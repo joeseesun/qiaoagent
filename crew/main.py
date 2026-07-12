@@ -84,10 +84,20 @@ def load_workflow_config(workflow_id: str):
 
 def create_llm(streaming=False, callbacks=None):
     """Create LLM instance with tu-zi.com API"""
+    provider, model = lock_provider_and_model(
+        None,
+        {
+            "id": "environment",
+            "type": "custom",
+            "baseURL": os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
+            "apiKey": os.getenv("OPENAI_API_KEY"),
+        },
+        os.getenv("OPENAI_MODEL_NAME", "claude-sonnet-4-5-20250929"),
+    )
     return ChatOpenAI(
-        model=os.getenv("OPENAI_MODEL_NAME", "claude-sonnet-4-5-20250929"),
-        openai_api_base=os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        model=model,
+        openai_api_base=provider["baseURL"],
+        openai_api_key=provider["apiKey"],
         temperature=0.7,
         streaming=streaming,
         callbacks=callbacks if callbacks else []
@@ -125,24 +135,26 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
             provider = llm_config_manager.providers[provider_id]
             if not model:
                 model = provider.get('defaultModel')
-
-            provider, model = lock_provider_and_model(provider_id, provider, model)
-
-            # Create CrewAI LLM instance
-            agent_llm = LLM(
-                model=f"openai/{model}",
-                base_url=provider['baseURL'],
-                api_key=provider['apiKey'],
-                temperature=0.7,
-            )
         else:
             # Fallback to environment variables
-            agent_llm = LLM(
-                model=f"openai/{os.getenv('OPENAI_MODEL_NAME', 'claude-sonnet-4-5-20250929')}",
-                base_url=os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
-                api_key=os.getenv("OPENAI_API_KEY"),
-                temperature=0.7,
-            )
+            provider = {
+                "id": "environment",
+                "type": "custom",
+                "baseURL": os.getenv("OPENAI_API_BASE", "https://api.tu-zi.com/v1"),
+                "apiKey": os.getenv("OPENAI_API_KEY"),
+            }
+            if not model:
+                model = os.getenv("OPENAI_MODEL_NAME", "claude-sonnet-4-5-20250929")
+
+        # Every branch, including environment fallback, passes through the
+        # official DeepSeek endpoint/model lock before constructing an LLM.
+        provider, model = lock_provider_and_model(provider_id, provider, model)
+        agent_llm = LLM(
+            model=f"openai/{model}",
+            base_url=provider['baseURL'],
+            api_key=provider['apiKey'],
+            temperature=0.7,
+        )
 
         agent = Agent(
             role=agent_config["role"],

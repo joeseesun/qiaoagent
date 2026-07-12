@@ -1,83 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { spawn } from 'child_process'
-import path from 'path'
+import { requireAdminRequest } from '@/lib/admin-auth'
+import {
+  loadAllowedWorkflowIds,
+  spawnWorkflowProcess,
+  validateWorkflowRunInput,
+  type WorkflowRunInput,
+} from '@/lib/workflow-runner'
 
 export async function POST(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
+  let body: unknown
   try {
-    const body = await request.json()
-    const { topic, workflow_id } = body
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Request must contain valid JSON' }, { status: 400 })
+  }
 
-    if (!topic || !workflow_id) {
-      return NextResponse.json(
-        { error: 'Missing topic or workflow_id' },
-        { status: 400 }
-      )
-    }
+  const input = body && typeof body === 'object'
+    ? body as Record<string, unknown>
+    : {}
 
-    // Call Python script
-    const result = await runPythonScript(topic, workflow_id)
-    
+  let allowedWorkflowIds: ReadonlySet<string>
+  try {
+    allowedWorkflowIds = loadAllowedWorkflowIds()
+  } catch (error) {
+    console.error('Failed to load workflow allowlist:', error)
+    return NextResponse.json({ error: 'Workflow configuration unavailable' }, { status: 500 })
+  }
+
+  const validation = validateWorkflowRunInput(
+    input.topic,
+    input.workflow_id,
+    allowedWorkflowIds
+  )
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status })
+  }
+
+  try {
+    const result = await runPythonWorkflow(validation.value, request.signal)
     return NextResponse.json(result)
-  } catch (error: any) {
-    console.error('Error running crew:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to run workflow' },
-      { status: 500 }
-    )
+  } catch (error) {
+    console.error('Workflow execution failed:', error)
+    return NextResponse.json({ error: 'Failed to run workflow' }, { status: 500 })
   }
 }
 
-function runPythonScript(topic: string, workflowId: string): Promise<any> {
+function runPythonWorkflow(input: WorkflowRunInput, signal: AbortSignal): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join(process.cwd(), 'crew', 'main.py')
-    
-    const python = spawn('python3', [
-      '-c',
-      `
-import sys
-import json
-sys.path.insert(0, '${process.cwd()}')
-from crew.main import run_workflow
-
-try:
-    result = run_workflow('${topic.replace(/'/g, "\\'")}', '${workflowId}')
-    print(json.dumps(result))
-except Exception as e:
-    print(json.dumps({"error": str(e)}), file=sys.stderr)
-    sys.exit(1)
-`
-    ])
-
+    const python = spawnWorkflowProcess(input, false)
     let stdout = ''
-    let stderr = ''
+    let stderrLength = 0
+    let settled = false
 
-    python.stdout.on('data', (data) => {
+    const finish = (callback: () => void) => {
+      if (settled) return
+      settled = true
+      signal.removeEventListener('abort', handleAbort)
+      callback()
+    }
+    const handleAbort = () => {
+      python.kill('SIGTERM')
+      finish(() => reject(new Error('Workflow request aborted')))
+    }
+
+    signal.addEventListener('abort', handleAbort, { once: true })
+    if (signal.aborted) {
+      handleAbort()
+      return
+    }
+
+    python.stdout.on('data', data => {
       stdout += data.toString()
     })
 
-    python.stderr.on('data', (data) => {
-      stderr += data.toString()
+    python.stderr.on('data', data => {
+      stderrLength += Buffer.byteLength(data)
     })
 
-    python.on('close', (code) => {
+    python.on('close', code => {
       if (code !== 0) {
-        reject(new Error(stderr || 'Python script failed'))
-      } else {
-        try {
-          const result = JSON.parse(stdout)
-          resolve(result)
-        } catch (e) {
-          reject(new Error('Failed to parse Python output'))
-        }
+        console.error('Workflow subprocess failed:', { code, stderrLength })
+        finish(() => reject(new Error('Workflow subprocess failed')))
+        return
+      }
+
+      try {
+        const result = JSON.parse(stdout)
+        finish(() => resolve(result))
+      } catch {
+        finish(() => reject(new Error('Failed to parse workflow output')))
       }
     })
 
-    python.on('error', (error) => {
-      reject(error)
-    })
+    python.on('error', error => finish(() => reject(error)))
   })
 }
 
-// Increase timeout for this route (60 seconds)
 export const maxDuration = 60
-

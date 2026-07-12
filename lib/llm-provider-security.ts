@@ -6,14 +6,24 @@ export const DEEPSEEK_FLASH_MODEL = 'deepseek-v4-flash'
 const REDACTED_API_KEY = '***'
 const FORBIDDEN_DEEPSEEK_MODELS = new Set(['deepseek-v4-pro'])
 
-type ProviderIdentity = Pick<LLMProvider, 'id' | 'type'>
+type ProviderIdentity = Pick<LLMProvider, 'id' | 'type' | 'baseURL'>
 
 function canonicalizeBaseURL(baseURL: string): string {
   return baseURL.replace(/\/+$/, '')
 }
 
 export function isDeepSeekProvider(provider: ProviderIdentity): boolean {
-  return provider.id.toLowerCase() === 'deepseek' || provider.type === 'deepseek'
+  let usesOfficialDeepSeekHost = false
+  try {
+    const hostname = new URL(provider.baseURL).hostname.toLowerCase().replace(/\.+$/, '')
+    usesOfficialDeepSeekHost = hostname === 'api.deepseek.com'
+  } catch {
+    // Invalid custom URLs are handled by the caller's validation path.
+  }
+
+  return String(provider.id).toLowerCase() === 'deepseek' ||
+    String(provider.type).toLowerCase() === 'deepseek' ||
+    usesOfficialDeepSeekHost
 }
 
 export function lockDeepSeekProvider<T extends LLMProvider>(provider: T): T {
@@ -79,9 +89,10 @@ export function validateProviderTestTarget(input: {
     : ''
   const model = input.model.trim()
   const canonicalBaseURL = canonicalizeBaseURL(input.baseURL.trim())
-  const targetsDeepSeek = providerId === 'deepseek' || parsedURL.hostname.toLowerCase() === 'api.deepseek.com'
+  const targetHostname = parsedURL.hostname.toLowerCase().replace(/\.+$/, '')
+  const targetsDeepSeek = providerId === 'deepseek' || targetHostname === 'api.deepseek.com'
 
-  if (FORBIDDEN_DEEPSEEK_MODELS.has(model)) {
+  if (FORBIDDEN_DEEPSEEK_MODELS.has(model.toLowerCase())) {
     return `禁止使用模型 ${model}；DeepSeek 仅允许 ${DEEPSEEK_FLASH_MODEL}`
   }
 
@@ -114,4 +125,20 @@ export function lockDeepSeekWorkflowConfig(
         : agentConfig.model,
     })),
   }
+}
+
+export function mergeWorkflowModelConfigs(
+  existingConfigs: WorkflowModelConfig[],
+  submittedConfigs: WorkflowModelConfig[]
+): WorkflowModelConfig[] {
+  const configsByWorkflow = new Map<string, WorkflowModelConfig>()
+
+  for (const config of existingConfigs) {
+    configsByWorkflow.set(config.workflowId, config)
+  }
+  for (const config of submittedConfigs) {
+    configsByWorkflow.set(config.workflowId, config)
+  }
+
+  return Array.from(configsByWorkflow.values())
 }

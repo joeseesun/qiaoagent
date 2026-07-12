@@ -33,6 +33,28 @@ class ProviderSecurityTest(unittest.TestCase):
         self.assertEqual(locked, provider)
         self.assertEqual(model, "kimi-latest")
 
+    def test_official_deepseek_url_cannot_masquerade_as_custom(self):
+        provider = {
+            "id": "custom-provider",
+            "type": "custom",
+            "baseURL": f"{DEEPSEEK_OFFICIAL_BASE_URL}/",
+            "defaultModel": "deepseek-v4-pro",
+        }
+
+        locked, model = lock_provider_and_model(
+            "custom-provider", provider, "deepseek-v4-pro"
+        )
+
+        self.assertEqual(locked["baseURL"], DEEPSEEK_OFFICIAL_BASE_URL)
+        self.assertEqual(model, DEEPSEEK_FLASH_MODEL)
+
+        trailing_dot_provider = dict(provider, baseURL="https://api.deepseek.com./v1")
+        locked, model = lock_provider_and_model(
+            "custom-provider", trailing_dot_provider, "deepseek-v4-pro"
+        )
+        self.assertEqual(locked["baseURL"], DEEPSEEK_OFFICIAL_BASE_URL)
+        self.assertEqual(model, DEEPSEEK_FLASH_MODEL)
+
 
 if __name__ == "__main__":
     unittest.main()
