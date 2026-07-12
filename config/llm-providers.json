@@ -42,12 +42,11 @@
     "baseURL": "https://api.deepseek.com/v1",
     "apiKey": "your-deepseek-api-key-here",
     "models": [
-      "deepseek-chat",
-      "deepseek-coder"
+      "deepseek-v4-flash"
     ],
-    "defaultModel": "deepseek-chat",
+    "defaultModel": "deepseek-v4-flash",
     "enabled": true,
-    "description": "DeepSeek - 深度求索大模型",
+    "description": "DeepSeek 官方 API（仅 Flash）",
     "createdAt": 1762002098632,
     "updatedAt": 1762011045762
   },

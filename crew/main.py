@@ -12,6 +12,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.callbacks.base import BaseCallbackHandler
 from dotenv import load_dotenv
 from crew.llm_config import llm_config_manager
+from crew.provider_security import lock_provider_and_model
 
 load_dotenv()
 
@@ -124,6 +125,8 @@ def create_agents(workflow_config, workflow_id, callbacks_map=None):
             provider = llm_config_manager.providers[provider_id]
             if not model:
                 model = provider.get('defaultModel')
+
+            provider, model = lock_provider_and_model(provider_id, provider, model)
 
             # Create CrewAI LLM instance
             agent_llm = LLM(
@@ -384,4 +387,3 @@ def run_workflow_with_progress(topic: str, workflow_id: str):
     except Exception as e:
         send_progress('error', f'执行失败: {str(e)}')
         raise Exception(f"Workflow execution failed: {str(e)}")
-

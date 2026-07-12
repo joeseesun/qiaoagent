@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { requireAdminRequest } from '@/lib/admin-auth'
 
 export async function GET() {
   try {
@@ -18,18 +19,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const body = await request.json()
-    const { workflows, password } = body
-
-    // Verify password
-    const adminPassword = process.env.ADMIN_PASSWORD || 'ai_admin_2025'
-    if (password !== adminPassword) {
-      return NextResponse.json(
-        { success: false, message: 'Invalid password' },
-        { status: 401 }
-      )
-    }
+    const { workflows } = body
 
     // Save configuration
     const workflowsPath = path.join(process.cwd(), 'public', 'workflows.json')
@@ -47,4 +42,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

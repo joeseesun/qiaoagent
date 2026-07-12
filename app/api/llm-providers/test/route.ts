@@ -1,53 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdminRequest } from '@/lib/admin-auth'
+import {
+  isCallerOwnedApiKey,
+  validateProviderTestTarget,
+} from '@/lib/llm-provider-security'
 
 export async function POST(request: NextRequest) {
+  const authError = requireAdminRequest(request)
+  if (authError) return authError
+
   try {
     const { baseURL, apiKey, model, providerId } = await request.json()
 
-    if (!baseURL) {
+    const targetError = validateProviderTestTarget({ baseURL, model, providerId })
+    if (targetError) {
       return NextResponse.json(
-        { error: '缺少必要参数：baseURL' },
+        { error: targetError },
         { status: 400 }
       )
     }
 
-    // Get real API key from environment variable
-    // Priority: environment variable > provided apiKey (for backward compatibility)
-    let realApiKey = apiKey
-
-    if (providerId) {
-      // Try to get API key from environment variable
-      const envKey = `${providerId.toUpperCase()}_API_KEY`
-      const envApiKey = process.env[envKey]
-
-      if (envApiKey) {
-        realApiKey = envApiKey
-      } else if (providerId === 'tuzi' && process.env.OPENAI_API_KEY) {
-        // Backward compatibility for tuzi
-        realApiKey = process.env.OPENAI_API_KEY
-      }
-    }
-
-    // Check if we have a valid API key (not a placeholder)
-    if (!realApiKey || realApiKey.startsWith('your-')) {
+    // Never combine a server-side credential with caller-controlled routing.
+    // Connection tests must always use a one-time key supplied by the caller.
+    if (!isCallerOwnedApiKey(apiKey)) {
       return NextResponse.json(
         {
-          error: `未配置 API Key。请在环境变量中设置 ${providerId ? providerId.toUpperCase() + '_API_KEY' : 'API_KEY'}`,
-          hint: providerId ? `在 .env 文件中添加: ${providerId.toUpperCase()}_API_KEY=your-real-api-key-here` : ''
+          error: '测试连接必须提供调用者自有 API Key；服务端环境 Key 不会用于测试。',
+          hint: '该 Key 仅用于本次测试请求，不会保存。',
         },
         { status: 400 }
       )
     }
 
     // 构建测试请求
-    const testModel = model || 'gpt-3.5-turbo'
-    const endpoint = `${baseURL}/chat/completions`
+    const testModel = model.trim()
+    const endpoint = `${baseURL.trim().replace(/\/+$/, '')}/chat/completions`
 
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${realApiKey}`,
+        'Authorization': `Bearer ${apiKey.trim()}`,
       },
       body: JSON.stringify({
         model: testModel,
@@ -99,4 +92,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

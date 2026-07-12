@@ -116,9 +116,13 @@
    - 限制 API key 的访问范围
    - 使用不同的 API keys 用于开发和生产
 
+5. **DeepSeek 路由约束**
+   - 官方 DeepSeek provider 固定使用 `https://api.deepseek.com/v1`
+   - 官方 DeepSeek provider 只允许 `deepseek-v4-flash`
+   - 连接测试必须提交调用者自有 Key，禁止回退到服务端环境 Key
+
 ## 参考资源
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [GitHub Security Best Practices](https://docs.github.com/en/code-security)
 - [Vercel Security](https://vercel.com/docs/security)
-

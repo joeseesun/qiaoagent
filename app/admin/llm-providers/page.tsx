@@ -24,6 +24,7 @@ import {
 import { LLMProvider, LLMProviderType, LLM_PROVIDER_TEMPLATES } from '@/types/llm'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { getAdminAuthHeaders } from '@/lib/admin-client'
 
 export default function LLMProvidersPage() {
   const [providers, setProviders] = useState<LLMProvider[]>([])
@@ -31,6 +32,7 @@ export default function LLMProvidersPage() {
   const [editingProvider, setEditingProvider] = useState<LLMProvider | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [testApiKey, setTestApiKey] = useState('')
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
   useEffect(() => {
@@ -50,6 +52,7 @@ export default function LLMProvidersPage() {
   }
 
   const handleCreate = () => {
+    setTestApiKey('')
     setEditingProvider({
       id: '',
       name: '',
@@ -64,10 +67,11 @@ export default function LLMProvidersPage() {
   }
 
   const handleEdit = async (provider: LLMProvider) => {
-    // Fetch full provider data (with API key)
+    // Fetch provider metadata; credentials are never returned by this endpoint.
     try {
       const res = await fetch(`/api/llm-providers/${provider.id}`)
       const fullProvider = await res.json()
+      setTestApiKey('')
       setEditingProvider(fullProvider)
       setIsDialogOpen(true)
     } catch (error) {
@@ -79,7 +83,11 @@ export default function LLMProvidersPage() {
     if (!confirm('确定要删除这个 LLM 提供商吗？')) return
 
     try {
-      await fetch(`/api/llm-providers?id=${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/llm-providers?id=${id}`, {
+        method: 'DELETE',
+        headers: getAdminAuthHeaders(),
+      })
+      if (!response.ok) throw new Error('Failed to delete provider')
       loadProviders()
     } catch (error) {
       console.error('Failed to delete provider:', error)
@@ -93,11 +101,15 @@ export default function LLMProvidersPage() {
       const method = editingProvider.id ? 'PUT' : 'POST'
       const response = await fetch('/api/llm-providers', {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
+        },
         body: JSON.stringify(editingProvider),
       })
 
       const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to save provider')
 
       // Show environment variable instructions if provided
       if (result._instructions) {
@@ -141,12 +153,15 @@ export default function LLMProvidersPage() {
     try {
       const response = await fetch('/api/llm-providers/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAdminAuthHeaders(),
+        },
         body: JSON.stringify({
           baseURL: editingProvider.baseURL,
-          apiKey: editingProvider.apiKey,
+          apiKey: testApiKey,
           model: editingProvider.defaultModel || editingProvider.models[0],
-          providerId: editingProvider.id, // Pass provider ID to get API key from env
+          providerId: editingProvider.id,
         }),
       })
 
@@ -389,6 +404,17 @@ export default function LLMProvidersPage() {
 
               {/* Test Connection */}
               <div className="pt-4 border-t space-y-3">
+                <div>
+                  <Label htmlFor="test-api-key">本次测试 API Key</Label>
+                  <Input
+                    id="test-api-key"
+                    type="password"
+                    autoComplete="off"
+                    value={testApiKey}
+                    onChange={(event) => setTestApiKey(event.target.value)}
+                    placeholder="仅用于本次连接测试，不会保存"
+                  />
+                </div>
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-semibold">测试连接</Label>
                   <Button
@@ -396,7 +422,7 @@ export default function LLMProvidersPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleTestConnection}
-                    disabled={testing || !editingProvider.baseURL || !editingProvider.id}
+                    disabled={testing || !editingProvider.baseURL || !editingProvider.id || !testApiKey}
                   >
                     {testing ? (
                       <>
@@ -414,7 +440,7 @@ export default function LLMProvidersPage() {
 
                 {/* Hint about API key */}
                 <p className="text-xs text-muted-foreground">
-                  💡 API Key 将从环境变量 <code className="px-1 py-0.5 bg-muted rounded">{editingProvider.id ? `${editingProvider.id.toUpperCase()}_API_KEY` : 'PROVIDER_API_KEY'}</code> 中读取
+                  API Key 只发送给所选提供商执行这一次测试；服务端环境 Key 不会用于该接口。
                 </p>
 
                 {testResult && (
@@ -452,4 +478,3 @@ export default function LLMProvidersPage() {
     </div>
   )
 }
-

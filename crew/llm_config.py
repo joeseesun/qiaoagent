@@ -7,6 +7,7 @@ import os
 from typing import Dict, Optional
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
+from crew.provider_security import lock_provider_and_model
 
 load_dotenv()
 
@@ -59,6 +60,7 @@ class LLMConfigManager:
                 providers = {}
                 for p in providers_list:
                     if p.get('enabled', True):
+                        p = dict(p)
                         provider_id = p['id']
 
                         # Override API key from environment variable if available
@@ -79,6 +81,9 @@ class LLMConfigManager:
                             # Backward compatibility for tuzi
                             p['baseURL'] = os.getenv('OPENAI_API_BASE')
 
+                        # Official DeepSeek is never allowed to inherit a proxy
+                        # URL or a non-Flash model from JSON/environment config.
+                        p, _ = lock_provider_and_model(provider_id, p)
                         providers[provider_id] = p
                 return providers
         except Exception as e:
@@ -157,6 +162,8 @@ class LLMConfigManager:
         # Use provider's default model if not specified
         if not model:
             model = provider.get('defaultModel', 'gpt-4')
+
+        provider, model = lock_provider_and_model(provider_id, provider, model)
         
         # Create and return LLM instance
         # Note: LangChain/OpenAI SDK reads OPENAI_API_BASE and OPENAI_API_KEY
@@ -223,11 +230,14 @@ class LLMConfigManager:
             model = provider.get('defaultModel', 'gpt-4')
         else:
             # Fallback to environment variables
+            provider_id = None
             provider = {
                 'baseURL': os.getenv('OPENAI_API_BASE', 'https://api.tu-zi.com/v1'),
                 'apiKey': os.getenv('OPENAI_API_KEY', ''),
             }
             model = os.getenv('OPENAI_MODEL_NAME', 'claude-sonnet-4.5')
+
+        provider, model = lock_provider_and_model(provider_id, provider, model)
         
         # Temporarily set env vars to prevent override
         original_base = os.environ.get('OPENAI_API_BASE')
@@ -267,4 +277,3 @@ class LLMConfigManager:
 
 # Global instance
 llm_config_manager = LLMConfigManager()
-

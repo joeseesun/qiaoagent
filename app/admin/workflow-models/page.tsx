@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LLMProvider, WorkflowModelConfig, AgentModelConfig } from '@/types/llm'
 import Link from 'next/link'
+import { getAdminAuthHeaders } from '@/lib/admin-client'
 
 interface Workflow {
   id: string
@@ -106,11 +107,15 @@ export default function WorkflowModelsPage() {
     try {
       // Save all configs
       for (const config of Object.values(configs)) {
-        await fetch('/api/workflow-models', {
+        const response = await fetch('/api/workflow-models', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAdminAuthHeaders(),
+          },
           body: JSON.stringify(config),
         })
+        if (!response.ok) throw new Error('Failed to save workflow model config')
       }
       alert('保存成功！')
     } catch (error) {
@@ -322,4 +327,3 @@ export default function WorkflowModelsPage() {
     </div>
   )
 }
-
