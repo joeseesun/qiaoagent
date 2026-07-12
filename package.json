@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test test/*.test.ts && python3 -m unittest crew.test_provider_security"
+    "test": "node --test test/*.test.ts && python3 -m unittest api.test_security crew.test_provider_security crew.test_workflow_runner"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",

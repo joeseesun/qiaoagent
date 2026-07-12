@@ -6,6 +6,7 @@ import { requireAdminRequest } from '@/lib/admin-auth'
 import {
   isDeepSeekProvider,
   lockDeepSeekWorkflowConfig,
+  mergeWorkflowModelConfigs,
 } from '@/lib/llm-provider-security'
 
 const CONFIG_FILE = path.join(process.cwd(), 'config', 'workflow-models.json')
@@ -48,8 +49,9 @@ function isWorkflowModelConfig(value: unknown): value is WorkflowModelConfig {
 }
 
 function usesForbiddenDeepSeekPro(config: WorkflowModelConfig): boolean {
-  return config.defaultModel === 'deepseek-v4-pro' ||
-    config.agentConfigs.some(agentConfig => agentConfig.model === 'deepseek-v4-pro')
+  const isPro = (model: string) => model.trim().toLowerCase() === 'deepseek-v4-pro'
+  return isPro(config.defaultModel) ||
+    config.agentConfigs.some(agentConfig => isPro(agentConfig.model))
 }
 
 // Ensure config directory exists
@@ -142,7 +144,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const configs = loadWorkflowConfigs()
+    const existingConfigs = loadWorkflowConfigs()
 
     const submittedConfigs = Array.isArray(body) ? body : [body]
     if (submittedConfigs.length === 0 || !submittedConfigs.every(isWorkflowModelConfig)) {
@@ -161,17 +163,8 @@ export async function POST(request: NextRequest) {
       lockDeepSeekWorkflowConfig(config, deepSeekProviderIds)
     )
 
-    for (const config of lockedConfigs) {
-      const index = configs.findIndex(existing => existing.workflowId === config.workflowId)
-
-      if (index !== -1) {
-        configs[index] = config
-      } else {
-        configs.push(config)
-      }
-    }
-
-    saveWorkflowConfigs(configs)
+    const mergedConfigs = mergeWorkflowModelConfigs(existingConfigs, lockedConfigs)
+    saveWorkflowConfigs(mergedConfigs)
 
     return NextResponse.json(Array.isArray(body) ? lockedConfigs : lockedConfigs[0])
   } catch (error) {

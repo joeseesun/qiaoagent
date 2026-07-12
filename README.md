@@ -53,8 +53,8 @@
 2. 宝塔 **终端** → 克隆项目到 `/www/wwwroot/qiaoagent`
 3. 宝塔 **文件** → 配置 `.env.production`（填入密码和 API Key）
 4. 宝塔 **终端** → 运行 `./docker-deploy.sh`
-5. 宝塔 **安全** → 开放端口 `3000`
-6. 访问 `http://你的IP:3000` ✅
+5. 宝塔 **网站** → 配置反向代理到 `http://127.0.0.1:3355`
+6. 通过已启用 HTTPS 的域名访问（不要对公网开放 `3355`）✅
 
 📖 **详细文档：** [宝塔 5 分钟快速部署](./BAOTA_QUICKSTART.md) | [宝塔完整指南](./docs/BAOTA_DEPLOYMENT.md)
 
@@ -76,7 +76,7 @@ chmod +x docker-deploy.sh
 ./docker-deploy.sh
 ```
 
-**访问应用：** `http://your-server-ip:3000`
+**访问应用：** 配置 Nginx/Caddy 反向代理到 `http://127.0.0.1:3355`，再通过 HTTPS 域名访问。不要对公网开放 `3355`。
 
 📖 **详细文档：** [Docker 部署完整指南](./docs/DOCKER_DEPLOYMENT.md)
 
@@ -124,11 +124,13 @@ docker build -t qiaoagent .
 **2. 运行容器**
 
 ```bash
-docker run -p 3000:3000 \
+docker run -p 127.0.0.1:3355:3355 \
   -e OPENAI_API_KEY=your-api-key \
   -e ADMIN_PASSWORD=your-password \
   qiaoagent
 ```
+
+容器端口只绑定到 loopback；请使用 Nginx/Caddy 反向代理并启用 HTTPS。
 
 ### 方法三：Railway 部署（推荐生产环境）
 

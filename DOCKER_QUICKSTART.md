@@ -59,8 +59,7 @@ chmod +x docker-deploy.sh
 
 ## 🌐 访问应用
 
-- **主页：** `http://your-server-ip:3355`
-- **管理后台：** `http://your-server-ip:3355/admin`
+`3355` 只绑定在服务器 loopback，不应直接从公网访问。先完成下方 Nginx 反向代理和 HTTPS 配置，再使用域名访问。
 
 ## 📊 常用命令
 
@@ -80,9 +79,9 @@ docker-compose down
 docker-compose up -d --build
 ```
 
-## 🔧 配置 Nginx 反向代理（可选）
+## 🔧 配置 Nginx 反向代理（必做）
 
-如果你想使用域名访问：
+使用域名把公网流量转发到本机监听：
 
 ```bash
 # 安装 Nginx
@@ -100,7 +99,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:3355;
+        proxy_pass http://127.0.0.1:3355;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -135,4 +134,3 @@ sudo certbot --nginx -d your-domain.com
 ---
 
 **祝部署顺利！** 🎉
-

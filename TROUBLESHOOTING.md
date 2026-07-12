@@ -257,7 +257,7 @@ libsqlite3-dev    # ChromaDB 需要
    ```bash
    $ docker ps
    CONTAINER ID   IMAGE     STATUS         PORTS
-   xxx            qiaoagent Up 2 minutes   0.0.0.0:3355->3000/tcp
+   xxx            qiaoagent Up 2 minutes   127.0.0.1:3355->3355/tcp
    ```
 
 2. **访问网站正常**:
@@ -286,4 +286,3 @@ libsqlite3-dev    # ChromaDB 需要
 ---
 
 **祝你好运！🍀**
-
